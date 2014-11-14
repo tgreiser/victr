@@ -1,0 +1,14 @@
+html body {
+  padding-top: 51px;
+  margin: 0px;
+}
+
+.navbar .form-group {
+  float: right;
+  margin: 8px;
+}
+
+ul li.form-group {
+  margin-top: 8px;
+  list-style: none;
+}
