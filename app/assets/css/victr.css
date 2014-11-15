@@ -12,3 +12,7 @@ ul li.form-group {
   margin-top: 8px;
   list-style: none;
 }
+
+.navbar form {
+  margin-bottom: 0px;
+}
