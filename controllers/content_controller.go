@@ -19,30 +19,41 @@ Show the markdown editor form
 */
 func (ctrl *ContentController) New(c context.Context) error {
   wc := mycontext.NewContext(c)
-  matches, _ := ctrl.templates(wc, "new.html")
-  t := template.Must(template.ParseFiles(matches...))
-  var output bytes.Buffer
-  data := struct {
-    Title string
-  }{
-    "Test Page",
-  }
-  t.Execute(&output, data )
-  wc.Aec.Infof("Template: %v", t.Tree)
-  return goweb.Respond.With(c, 200, output.Bytes())
+  return ctrl.render(wc, "new", "")
 }
 
 func (ctrl *ContentController) templates(wc mycontext.Context, main string) ([]string, error) {
-  pattern := filepath.Join("views", "partials", "*.html")
-  wc.Aec.Infof("Pattern: %v", pattern)
-  matches, err := filepath.Glob(pattern)
-  if err != nil {
-    wc.Aec.Errorf("Error finding files: %v", err)
-  } else {
-    matches = append([]string{filepath.Join("views", main)}, matches...)
-    wc.Aec.Infof("Found matches: %v", matches)
+  var matches [2]string
+  matches[0] = filepath.Join("views", main + ".html")
+  matches[1] = filepath.Join("views", "base.html")
+  return matches[0:], nil
+}
+
+func (ctrl *ContentController) render(wc mycontext.Context, main string, data interface {}) error {
+  matches, _ := ctrl.templates(wc, main)
+  wc.Aec.Infof("Got matches for %v.html: %v", main, matches)
+  t := template.Must(template.ParseFiles(matches...))
+  var nav bytes.Buffer
+  t.ExecuteTemplate(&nav, "nav-form", data )
+  var form bytes.Buffer
+  t.ExecuteTemplate(&form, "form", data)
+  var page bytes.Buffer
+  t.ExecuteTemplate(&page, "page", data)
+
+  var output bytes.Buffer
+  pagedata := struct {
+    Form template.HTML
+    NavForm template.HTML
+    Page template.HTML
+  } {
+    template.HTML(form.String()),
+    template.HTML(nav.String()),
+    template.HTML(page.String()),
   }
-  return matches, err
+  wc.Aec.Infof("Got nav: %v", pagedata.NavForm)
+  t.ExecuteTemplate(&output, "base", pagedata)
+
+  return goweb.Respond.With(wc.Ctx, 200, output.Bytes())
 }
 
 func (ctrl *ContentController) Create(c context.Context) error {
@@ -61,16 +72,16 @@ func (ctrl *ContentController) Create(c context.Context) error {
   }
   draft.Execute(&output, data )
 
-  matches, _ := ctrl.templates(wc, "draft.html")
-  t := template.Must(template.ParseFiles(matches...))
-  var page bytes.Buffer
-  draftdata := struct {
+  pagedata := struct {
     Draft template.HTML
-  }{
+    Title string
+    Content string
+    Path string
+  } {
     template.HTML(output.String()),
+    data.Title,
+    c.FormValue("content"),
+    c.FormValue("path"),
   }
-  t.Execute(&page, draftdata )
-
-  return goweb.Respond.With(c, 200, page.Bytes())
-
+  return ctrl.render(wc, "draft", pagedata)
 }
