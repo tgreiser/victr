@@ -1,8 +1,6 @@
 package app
 
 import (
-  "net/http"
-
   "github.com/stretchr/goweb"
   "github.com/stretchr/goweb/context"
   "github.com/stretchr/goweb/handlers"
@@ -10,7 +8,7 @@ import (
   "github.com/tgreiser/victr/controllers"
 )
 
-func init() {
+func Init() {
   handler := handlers.NewHttpHandler(goweb.CodecService)
 
   handler.Map("GET", "/", func (c context.Context) error {
@@ -22,13 +20,18 @@ func init() {
   handler.Map("GET", "/content/new", func (c context.Context) error {
     return content.New(c)
   })
+  handler.Map("POST", "/content/publish", func (c context.Context) error {
+    return content.Publish(c)
+  })
 
   // failover handler
+  /*
   handler.Map(func(c context.Context) error {
     return NotFound(c)
   })
 
   http.Handle("/", handler)
+  */
 }
 
 func NotFound(c context.Context) error {

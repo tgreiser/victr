@@ -85,3 +85,15 @@ func (ctrl *ContentController) Create(c context.Context) error {
   }
   return ctrl.render(wc, "draft", pagedata)
 }
+
+/*
+1. Save to datastore
+2. Save rendered template to cloud storage
+3. Redirect user to new URL
+*/
+func (ctrl *ContentController) Publish(c context.Context) error {
+  wc := mycontext.NewContext(c)
+  // s
+  var output bytes.Buffer
+  return goweb.Respond.With(wc.Ctx, 200, output.Bytes())
+}
