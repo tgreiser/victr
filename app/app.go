@@ -11,6 +11,8 @@ import (
 )
 
 func Init() {
+  translation_path := AppPath(path.Join("languages", "en_US.json"))
+  i18n.MustLoadTranslationFile(translation_path)
   handler := handlers.NewHttpHandler(goweb.CodecService)
 
   //handler.Map("GET", "/", func (c context.Context) error {

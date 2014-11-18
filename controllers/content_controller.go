@@ -24,8 +24,8 @@ func (ctrl *ContentController) New(c context.Context) error {
 
 func (ctrl *ContentController) templates(wc mycontext.Context, main string) ([]string, error) {
   var matches [2]string
-  matches[0] = filepath.Join("views", main + ".html")
-  matches[1] = filepath.Join("views", "base.html")
+  matches[0] = mycontext.AppPath(filepath.Join("views", main + ".html"))
+  matches[1] = mycontext.AppPath(filepath.Join("views", "base.html"))
   return matches[0:], nil
 }
 

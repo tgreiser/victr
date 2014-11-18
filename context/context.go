@@ -3,6 +3,8 @@ package context
 import (
   "appengine"
   "fmt"
+  "path"
+  "runtime"
 
   "github.com/nicksnyder/go-i18n/i18n"
   "github.com/stretchr/goweb/context"
@@ -30,6 +32,11 @@ type Context struct {
 func (c *Context) GetLocale() string {
   // TODO : check the headers or cookie or whatever
   return "en_US"
+}
+
+func AppPath(filename_from_app string) string {
+  _, filename, _, _ := runtime.Caller(1);
+  return path.Join(path.Dir(filename), "..", "app", filename_from_app)
 }
 
 func LoadTranslator(aec appengine.Context, locale string) (i18n.TranslateFunc, error) {
