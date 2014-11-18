@@ -39,7 +39,9 @@ func LoadTranslator(aec appengine.Context, locale string) (i18n.TranslateFunc, e
   T, err := i18n.Tfunc(locale)
   if err != nil {
     aec.Errorf("Could not load a valid language file for %v! Had to send a static english error message %v", locale, err)
-    T, err = LoadTranslator(aec, "en_US")
+    if locale != "en_US" {
+      T, err = LoadTranslator(aec, "en_US")
+    }
     if err != nil {
       return nil, fmt.Errorf("Failed to load requested language file, or English backup:%v", err)
     }
