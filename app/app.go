@@ -38,7 +38,7 @@ func init() {
   })
 
   */
-  http.Handle("/", handler)
+  http.Handle("/content/", handler)
 }
 
 func NotFound(c context.Context) error {
