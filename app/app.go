@@ -11,9 +11,9 @@ import (
 func Init() {
   handler := handlers.NewHttpHandler(goweb.CodecService)
 
-  handler.Map("GET", "/", func (c context.Context) error {
-    return goweb.Respond.With(c, 200, []byte("Hey planet, what's up"))
-  })
+  //handler.Map("GET", "/", func (c context.Context) error {
+  //  return goweb.Respond.With(c, 200, []byte("Hey planet, what's up"))
+  //})
 
   content := new(controllers.ContentController)
   handler.MapController(content)
@@ -30,8 +30,8 @@ func Init() {
     return NotFound(c)
   })
 
-  http.Handle("/", handler)
   */
+  http.Handle("/content", handler)
 }
 
 func NotFound(c context.Context) error {
