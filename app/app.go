@@ -13,7 +13,7 @@ import (
   "github.com/tgreiser/victr/controllers"
 )
 
-func Init() {
+func init() {
   translation_path := mycontext.AppPath(path.Join("languages", "en_US.json"))
   i18n.MustLoadTranslationFile(translation_path)
   handler := handlers.NewHttpHandler(goweb.CodecService)
