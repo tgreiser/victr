@@ -61,7 +61,7 @@ func (ctrl *ContentController) Create(c context.Context) error {
 
   wc.Aec.Infof("Running create %v", c.FormValue("content"))
 
-  draft := template.Must(template.ParseFiles("templates/simple/index.html"))
+  draft := template.Must(template.ParseFiles("themes/simple/index.html"))
   var output bytes.Buffer
   data := struct {
     Content template.HTML

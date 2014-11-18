@@ -17,8 +17,8 @@ handlers:
   static_dir: assets
   application_readable: true
 
-- url: .*/templates/
-  static_dir: templates
+- url: .*/themes/
+  static_dir: themes
   application_readable: true
 
 - url: /.*
