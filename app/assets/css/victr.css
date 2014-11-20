@@ -3,6 +3,10 @@ html body {
   margin: 0px;
 }
 
+.form-padding {
+  margin: 8px;
+}
+
 .navbar .form-group {
   float: right;
   margin: 8px;
