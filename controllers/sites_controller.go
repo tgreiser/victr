@@ -52,8 +52,8 @@ func (ctrl *SitesController) fetchSites(wc mycontext.Context) []*models.Site {
   return sites
 }
 
-func (ctrl *SitesController) fetchThemes(wc mycontext.Context) ([]*models.Theme, error) {
-  themes, err := models.FetchThemes(wc)
+func (ctrl *SitesController) fetchThemes(wc mycontext.Context, sel string) ([]*models.Theme, error) {
+  themes, err := models.FetchThemes(wc, sel)
   if err != nil {
     wc.Aec.Errorf("error fetching themes, panic: %v", err)
     return nil, goweb.Respond.WithRedirect(wc.Ctx, fmt.Sprintf("/sites/?msg=%s",
@@ -64,7 +64,9 @@ func (ctrl *SitesController) fetchThemes(wc mycontext.Context) ([]*models.Theme,
 
 func (ctrl *SitesController) renderSites(wc mycontext.Context, message string, errs map[string]string, edit *models.Site) error {
   sites := ctrl.fetchSites(wc)
-  themes, err := ctrl.fetchThemes(wc)
+  sel := ""
+  if (edit != nil) { sel = edit.Theme }
+  themes, err := ctrl.fetchThemes(wc, sel)
   if err != nil {
     return err
   }
@@ -100,6 +102,7 @@ func (ctrl *SitesController) Create(c context.Context) error {
     Name: wc.Ctx.FormValue("name"),
     URL: wc.Ctx.FormValue("url"),
     Bucket: wc.Ctx.FormValue("bucket"),
+    Theme: wc.Ctx.FormValue("theme"),
   }
 
   // validate
