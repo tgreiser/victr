@@ -29,6 +29,17 @@ func FetchSites(wc mycontext.Context, limit, offset int) ([]*Site, error) {
   return sites, err
 }
 
+func FindSite(wc mycontext.Context, k *datastore.Key, s *Site) error {
+  if err := datastore.Get(wc.Aec, k, s); err != nil {
+    if err != datastore.ErrNoSuchEntity {
+      wc.Aec.Errorf("datastore error with FindSite: %v", err)
+    }
+    return err
+  }
+  s.Key = k
+  return nil
+}
+
 type Site struct {
   Key *datastore.Key
   Name string

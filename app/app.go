@@ -45,7 +45,7 @@ func init() {
   conf.MapController(sites)
   conf.Map(func(c context.Context) error {
     wc := mycontext.NewContext(c)
-    wc.Aec.Infof("Not found: %v", c)
+    wc.Aec.Infof("Not found: %v %v", c.MethodString(), c.Path())
     return NotFound(c)
   })
   http.Handle("/sites/", conf)

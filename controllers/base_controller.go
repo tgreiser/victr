@@ -58,7 +58,7 @@ func (ctrl *BaseController) funcMap() template.FuncMap {
 
 func (ctrl *BaseController) MenuLink(url, title, current_url string) template.HTML {
   ret := "<li><a href=\""+url+"\">"+title+"</a></li>"
-  if url == current_url {
+  if len(url) <= len(current_url) && url == current_url[0:len(url)] {
     ret = "<li class=\"active\"><a href=\""+url+"\">"+title+"<span class=\"sr-only\">(current)</span></a></li>"
   }
   return template.HTML(ret)

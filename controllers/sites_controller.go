@@ -4,6 +4,7 @@ import (
   "fmt"
   "strconv"
 
+  "appengine/datastore"
   "github.com/stretchr/goweb"
   "github.com/stretchr/goweb/context"
 
@@ -21,6 +22,23 @@ func (ctrl *SitesController) ReadMany(c context.Context) error {
   return ctrl.renderSites(wc, "", map[string]string{}, nil)
 }
 
+/*
+This actually does a ReadMany action combined with Edit
+*/
+func (ctrl *SitesController) Read(key string, c context.Context) error {
+  wc := mycontext.NewContext(c)
+  wc.Aec.Infof("Rendering Config:Read %v", key)
+  var site models.Site
+  msg := ""
+  k, err := datastore.DecodeKey(key)
+  if err == nil { err = models.FindSite(wc, k, &site) }
+  if err != nil {
+    msg := "Unable to load site"
+    wc.Aec.Errorf("%v: %v", msg, err)
+  }
+  return ctrl.renderSites(wc, msg, map[string]string{}, &site)
+}
+
 func (ctrl *SitesController) renderSites(wc mycontext.Context, message string, errs map[string]string, edit *models.Site) error {
   limit, ce := strconv.Atoi(wc.Ctx.FormValue("limit"))
   if ce != nil { limit = 50 }
@@ -32,6 +50,10 @@ func (ctrl *SitesController) renderSites(wc mycontext.Context, message string, e
     sites = make([]*models.Site, 0, 0)
   }
   wc.Aec.Infof("found %v sites", len(sites))
+  wc.Aec.Infof("edit set? %v", edit != nil)
+  if edit != nil {
+    wc.Aec.Infof("edit: %v", edit)
+  }
 
   data := struct {
     Message string
