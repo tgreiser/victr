@@ -45,6 +45,7 @@ type Site struct {
   Name string
   URL string
   Bucket string
+  Theme string
 }
 
 func (s *Site) Validate() map[string]string {

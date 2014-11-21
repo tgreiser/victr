@@ -39,7 +39,7 @@ func (ctrl *SitesController) Read(key string, c context.Context) error {
   return ctrl.renderSites(wc, msg, map[string]string{}, &site)
 }
 
-func (ctrl *SitesController) renderSites(wc mycontext.Context, message string, errs map[string]string, edit *models.Site) error {
+func (ctrl *SitesController) fetchSites(wc mycontext.Context) []*models.Site {
   limit, ce := strconv.Atoi(wc.Ctx.FormValue("limit"))
   if ce != nil { limit = 50 }
   offset, ce := strconv.Atoi(wc.Ctx.FormValue("offset"))
@@ -48,6 +48,25 @@ func (ctrl *SitesController) renderSites(wc mycontext.Context, message string, e
   if err != nil {
     wc.Aec.Errorf("error fetching sites, using empty list: %v", err)
     sites = make([]*models.Site, 0, 0)
+  }
+  return sites
+}
+
+func (ctrl *SitesController) fetchThemes(wc mycontext.Context) ([]*models.Theme, error) {
+  themes, err := models.FetchThemes(wc)
+  if err != nil {
+    wc.Aec.Errorf("error fetching themes, panic: %v", err)
+    return nil, goweb.Respond.WithRedirect(wc.Ctx, fmt.Sprintf("/sites/?msg=%s",
+      "No themes were found. Please check your repository that you have something in site/themes/."))
+  }
+  return themes, nil
+}
+
+func (ctrl *SitesController) renderSites(wc mycontext.Context, message string, errs map[string]string, edit *models.Site) error {
+  sites := ctrl.fetchSites(wc)
+  themes, err := ctrl.fetchThemes(wc)
+  if err != nil {
+    return err
   }
   wc.Aec.Infof("found %v sites", len(sites))
   wc.Aec.Infof("edit set? %v", edit != nil)
@@ -60,11 +79,13 @@ func (ctrl *SitesController) renderSites(wc mycontext.Context, message string, e
     Errors map[string]string
     Edit *models.Site
     Sites []*models.Site
+    Themes []*models.Theme
   } {
     message,
     errs,
     edit,
     sites,
+    themes,
   }
   return ctrl.render(wc, "sites", data)
 }
