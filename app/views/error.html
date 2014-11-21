@@ -1,0 +1,11 @@
+{{ define "form" }}
+  <form method="POST" action="/content/">
+{{ end }}
+{{ define "nav-form" }}
+{{ end }}
+
+{{ define "page" }}
+  <div class="form-padding">
+    {{ if .Message }}<div class="message alert alert-danger">{{ .Message }}</div>{{end}}
+  </div>
+{{ end }}

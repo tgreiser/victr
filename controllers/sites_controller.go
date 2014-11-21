@@ -54,11 +54,11 @@ func (ctrl *SitesController) fetchSites(wc mycontext.Context) []*models.Site {
 
 func (ctrl *SitesController) fetchThemes(wc mycontext.Context, sel string) ([]*models.Theme, error) {
   themes, err := models.FetchThemes(wc, sel)
-  if err != nil {
+  if err != nil || len(themes) == 0 {
     wc.Aec.Errorf("error fetching themes, panic: %v", err)
-    return nil, goweb.Respond.WithRedirect(wc.Ctx, fmt.Sprintf("/sites/?msg=%s",
-      "No themes were found. Please check your repository that you have something in site/themes/."))
+    return nil, ctrl.error(wc, "No themes were found. Please check your repository that you have something in site/themes/. Is it deployed?")
   }
+  wc.Aec.Infof("Returned %v themes", len(themes))
   return themes, nil
 }
 
@@ -67,7 +67,7 @@ func (ctrl *SitesController) renderSites(wc mycontext.Context, message string, e
   sel := ""
   if (edit != nil) { sel = edit.Theme }
   themes, err := ctrl.fetchThemes(wc, sel)
-  if err != nil {
+  if err != nil || len(themes) == 0 {
     return err
   }
   wc.Aec.Infof("found %v sites", len(sites))

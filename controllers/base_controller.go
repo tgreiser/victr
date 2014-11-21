@@ -43,6 +43,15 @@ func (ctrl *BaseController) render(wc mycontext.Context, main string, data inter
   return goweb.Respond.With(wc.Ctx, 200, output.Bytes())
 }
 
+func (ctrl *BaseController) error(wc mycontext.Context, msg string) error {
+  data := struct {
+    Message string
+  } {
+    msg,
+  }
+  return ctrl.render(wc, "error", data)
+}
+
 func (ctrl *BaseController) templates(wc mycontext.Context, main string) ([]string, error) {
   var matches [2]string
   matches[0] = mycontext.AppPath(filepath.Join("views", main + ".html"))
