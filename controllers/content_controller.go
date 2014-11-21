@@ -2,6 +2,7 @@ package controllers
 
 import (
   "bytes"
+  "fmt"
   "html/template"
 
   "github.com/russross/blackfriday"
@@ -9,6 +10,7 @@ import (
   "github.com/stretchr/goweb/context"
 
   mycontext "github.com/tgreiser/victr/context"
+  "github.com/tgreiser/victr/models"
 )
 
 type ContentController struct {
@@ -20,7 +22,16 @@ Show the markdown editor form
 */
 func (ctrl *ContentController) New(c context.Context) error {
   wc := mycontext.NewContext(c)
-  return ctrl.render(wc, "new", "")
+  sites, err := models.FetchSites(wc, 100, 0)
+  if err != nil || len(sites) == 0 {
+    return goweb.Respond.WithRedirect(wc.Ctx, fmt.Sprintf("/sites/?msg=%s", "Please create a site"))
+  }
+  data := struct {
+    Sites []*models.Site
+  } {
+    sites,
+  }
+  return ctrl.render(wc, "new", data)
 }
 
 func (ctrl *ContentController) Create(c context.Context) error {

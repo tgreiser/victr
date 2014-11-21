@@ -19,7 +19,7 @@ type SitesController struct {
 func (ctrl *SitesController) ReadMany(c context.Context) error {
   wc := mycontext.NewContext(c)
   wc.Aec.Infof("Rendering Config:ReadMany")
-  return ctrl.renderSites(wc, "", map[string]string{}, nil)
+  return ctrl.renderSites(wc, wc.Ctx.FormValue("msg"), map[string]string{}, nil)
 }
 
 /*

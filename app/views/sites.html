@@ -8,7 +8,7 @@
 
 {{ define "page" }}
   <div class="form-padding">
-    <p class="message">{{ .Message }}</p>
+    {{ if .Message }}<div class="message alert alert-danger">{{ .Message }}</div>{{end}}
     <!-- List of Sites -->
     <table class="sites">
     {{ range $element := .Sites }}
