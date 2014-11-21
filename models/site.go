@@ -78,3 +78,13 @@ func (s *Site) Save(wc mycontext.Context, key *datastore.Key) error {
   }
   return err
 }
+
+func (s *Site) Delete(wc mycontext.Context) error {
+  err := datastore.RunInTransaction(wc.Aec, func(aec appengine.Context) error {
+    return datastore.Delete(aec, s.Key)
+  }, nil)
+  if err != nil {
+    wc.Aec.Errorf("datastore delete failed: %v", err)
+  }
+  return err
+}

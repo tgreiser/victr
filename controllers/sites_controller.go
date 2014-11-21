@@ -98,3 +98,21 @@ func (ctrl *SitesController) Create(c context.Context) error {
 
   return goweb.Respond.WithRedirect(wc.Ctx, fmt.Sprintf("/sites/%s", site.Key.Encode()))
 }
+
+func (ctrl *SitesController) Delete(key string, c context.Context) error {
+  wc := mycontext.NewContext(c)
+  msg := ""
+  var site models.Site
+  k, err := datastore.DecodeKey(key)
+  if err == nil { err = models.FindSite(wc, k, &site) }
+  if err != nil {
+    msg = "Unable to find site"
+    wc.Aec.Errorf("%v: %v", msg, err)
+  } else {
+    if err = site.Delete(wc); err != nil {
+      msg = "Unable to delete site"
+      wc.Aec.Errorf("%v: %v", msg, err)
+    }
+  }
+  return ctrl.renderSites(wc, msg, map[string]string{}, &site)
+}

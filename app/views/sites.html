@@ -16,10 +16,27 @@
       <tr class="site">
         <td><a href="/sites/{{ $element.Key.Encode }}">{{ $element.Name }}</a></td>
         <td><a href="{{ $element.URL }}">{{ $element.URL }}</a></td>
-        <td class="controls"><a href="#" class="deleteLink" x-key="{{ $element.Key }}">Delete?</a></td>
+        <td class="controls"><a href="#" class="deleteLink btn btn-sm btn-warning" 
+            onclick="deleteSite(this, '{{ $element.Key.Encode }}', '{{ $element.Name }}')">Delete?</a></td>
       </tr>
     {{ end }}
     </table>
+    <script>
+function deleteSite(elem, id, name) {
+  bootbox.confirm("Are you sure you want to delete "+name+"?", function(result) {
+    if (result == false) return;
+
+    var url = "/sites/"+id;
+    $.ajax({
+      type: 'DELETE',
+      url: url
+    })
+    .done(function(msg) {
+      $(elem).parent().parent().remove();
+    });
+  });
+}
+    </script>
 
     <!-- Edit Form -->
     <div class="form-group">
