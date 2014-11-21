@@ -10,7 +10,6 @@
   <div class="form-padding">
     <p class="message">{{ .Message }}</p>
     <!-- List of Sites -->
-    <p>Sites Found: {{ len .Sites }}</p>
     <table class="sites">
     {{ range $element := .Sites }}
       <tr class="site">
