@@ -20,3 +20,14 @@ ul li.form-group {
 .navbar form {
   margin-bottom: 0px;
 }
+
+.sites {
+  margin: 16px;
+  font-size: 12px;
+}
+.sites td {
+  padding: 4px;
+}
+.sites td.controls {
+  padding-left: 20px;
+}

@@ -1,0 +1,36 @@
+{{ define "form" }}
+  <form method="POST" action="/sites/">
+{{ end }}
+{{ define "nav-form" }}
+    <input type="submit" class="btn btn-default" value="Save" />
+{{ end }}
+
+{{ define "page" }}
+  <div class="form-padding">
+    <!-- List of Sites -->
+    <p>Sites Found: {{ len .Sites }}</p>
+    <table class="sites">
+    {{ range $element := .Sites }}
+      <tr class="site">
+        <td>{{ $element.Name }}</td>
+        <td class="controls"><a href="#" class="deleteLink" x-key="{{ $element.Key }}">Delete?</a></td>
+      </tr>
+    {{ end }}
+    </table>
+
+    <!-- Edit Form -->
+    <div class="form-group">
+      <label for="url">Site URL:</label>
+      <input type="text" name="url" class="form-control" placeholder="http://www.victryismine.com/" />
+    </div>
+    <div class="form-group">
+      <label for="name">Site Name:</label>
+      <input type="text" name="name" class="form-control" placeholder="Big G Bar and Grill" />
+    </div>
+    <div class="form-group">
+      <label for="bucket">Cloud Storage Bucket:</label>
+      <input type="text" name="bucket" class="form-control" placeholder="gs://tng-victr-pub" />
+    </div>
+  </div>
+</form>
+{{end}}

@@ -41,14 +41,14 @@ func init() {
   http.Handle("/content/", handler)
 
   conf := handlers.NewHttpHandler(goweb.CodecService)
-  config := new(controllers.ConfigController)
-  conf.MapController(config)
+  sites := new(controllers.SitesController)
+  conf.MapController(sites)
   conf.Map(func(c context.Context) error {
     wc := mycontext.NewContext(c)
     wc.Aec.Infof("Not found: %v", c)
     return NotFound(c)
   })
-  http.Handle("/config/", conf)
+  http.Handle("/sites/", conf)
 }
 
 func NotFound(c context.Context) error {
