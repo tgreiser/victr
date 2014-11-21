@@ -56,7 +56,7 @@ func (ctrl *SitesController) fetchThemes(wc mycontext.Context, sel string) ([]*m
   themes, err := models.FetchThemes(wc, sel)
   if err != nil || len(themes) == 0 {
     wc.Aec.Errorf("error fetching themes, panic: %v", err)
-    return nil, ctrl.error(wc, "No themes were found. Please check your repository that you have something in site/themes/. Is it deployed?")
+    return nil, ctrl.error(wc, wc.T("err_no_themes"))
   }
   wc.Aec.Infof("Returned %v themes", len(themes))
   return themes, nil

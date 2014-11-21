@@ -24,8 +24,12 @@ func (ctrl *ContentController) New(c context.Context) error {
   wc := mycontext.NewContext(c)
   sites, err := models.FetchSites(wc, 100, 0)
   if err != nil || len(sites) == 0 {
-    return goweb.Respond.WithRedirect(wc.Ctx, fmt.Sprintf("/sites/?msg=%s", "Please create a site"))
+    return goweb.Respond.WithRedirect(wc.Ctx, fmt.Sprintf("/sites/?msg=%s", wc.T("err_create_site")))
   }
+/*  themes, err := models.FetchThemes(wc)
+  if err || len(themes) == 0 {
+    return ctrl.error(wc, wc.T("err_no_themes"))
+  }*/
   data := struct {
     Sites []*models.Site
   } {

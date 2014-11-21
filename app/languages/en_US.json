@@ -2,5 +2,13 @@
   {
     "id": "app_name",
     "translation": "VICtR"
+  },
+  {
+    "id": "err_no_themes",
+    "translation": "No themes were found. Please check your repository that you have something in site/themes/. Is it deployed?"
+  },
+  {
+    "id": "err_create_site",
+    "translation": "Please create a site"
   }
 ]
