@@ -42,3 +42,7 @@ ul li.form-group {
 }
 .meta-data .form-group label {
 }
+
+html body .alert {
+  padding: 8px;
+}

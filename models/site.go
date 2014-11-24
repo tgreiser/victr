@@ -60,6 +60,7 @@ func (s *Site) Validate() map[string]string {
   if s.Bucket == "" {
     ret["bucket"] = "Please enter the site bucket"
   }
+  if s.Theme == "" {  ret["theme"] = "Please pick a default theme" }
 
   return ret
 }

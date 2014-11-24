@@ -28,7 +28,7 @@ func (ctrl *ContentController) New(c context.Context) error {
   }
 /*  themes, err := models.FetchThemes(wc)
   if err || len(themes) == 0 {
-    return ctrl.error(wc, wc.T("err_no_themes"))
+    return ctrl.error(wc, "err_no_themes")
   }*/
   data := struct {
     Sites []*models.Site

@@ -56,7 +56,7 @@ func (ctrl *SitesController) fetchThemes(wc mycontext.Context, sel string) ([]*m
   themes, err := models.FetchThemes(wc, sel)
   if err != nil || len(themes) == 0 {
     wc.Aec.Errorf("error fetching themes, panic: %v", err)
-    return nil, ctrl.error(wc, wc.T("err_no_themes"))
+    return nil, ctrl.error(wc, "err_no_themes")
   }
   wc.Aec.Infof("Returned %v themes", len(themes))
   return themes, nil
@@ -72,6 +72,7 @@ func (ctrl *SitesController) renderSites(wc mycontext.Context, message string, e
   }
   wc.Aec.Infof("found %v sites", len(sites))
   wc.Aec.Infof("edit set? %v", edit != nil)
+  wc.Aec.Infof("Errs: %v %v", len(errs), errs)
   if edit != nil {
     wc.Aec.Infof("edit: %v", edit)
   }
@@ -108,8 +109,9 @@ func (ctrl *SitesController) Create(c context.Context) error {
   // validate
   wc.Aec.Infof("Validating...")
   if errs := site.Validate(); len(errs) > 0 {
+    wc.Aec.Warningf("Failed to validate: %v %v", len(errs), errs)
     msg := "Failed to save"
-    ctrl.renderSites(wc, msg, errs, site)
+    return ctrl.renderSites(wc, msg, errs, site)
   }
 
   // save
@@ -117,7 +119,7 @@ func (ctrl *SitesController) Create(c context.Context) error {
   if err := site.Save(wc, models.NewSiteKey(wc, site.URL)); err != nil {
     msg := "Failed to save"
     wc.Aec.Errorf("msg %v", err)
-    ctrl.renderSites(wc, msg, map[string]string { }, site)
+    return ctrl.renderSites(wc, msg, map[string]string { }, site)
   }
 
   return goweb.Respond.WithRedirect(wc.Ctx, fmt.Sprintf("/sites/%s", site.Key.Encode()))

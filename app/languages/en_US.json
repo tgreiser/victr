@@ -8,6 +8,10 @@
     "translation": "No themes were found. Please check your repository that you have something in site/themes/. Is it deployed?"
   },
   {
+    "id": "err_serious",
+    "translation": "A serious error occurred. Please check your apps logs."
+  },
+  {
     "id": "err_create_site",
     "translation": "Please create a site"
   }
