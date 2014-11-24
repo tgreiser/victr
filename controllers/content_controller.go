@@ -2,10 +2,15 @@ package controllers
 
 import (
   "bytes"
+  "encoding/base64"
   "fmt"
   "html/template"
+  "net/http"
   "path"
 
+  "code.google.com/p/google-api-go-client/storage/v1"
+  "github.com/golang/oauth2"
+  "github.com/golang/oauth2/google"
   "github.com/russross/blackfriday"
   "github.com/stretchr/goweb"
   "github.com/stretchr/goweb/context"
@@ -50,17 +55,7 @@ func (ctrl *ContentController) Create(c context.Context) error {
 
   wc.Aec.Infof("Running create %v", c.FormValue("content"))
 
-  tmpl := path.Join("themes", c.FormValue("theme"), "index.html")
-  draft := template.Must(template.ParseFiles(tmpl))
-  var output bytes.Buffer
-  data := struct {
-    Content template.HTML
-    Title string
-  }{
-    template.HTML(blackfriday.MarkdownBasic([]byte(c.FormValue("content")))),
-    c.FormValue("title"),
-  }
-  draft.Execute(&output, data )
+  output, title := ctrl.BuildContent(wc)
 
   pagedata := struct {
     Draft template.HTML
@@ -69,11 +64,30 @@ func (ctrl *ContentController) Create(c context.Context) error {
     Path string
   } {
     template.HTML(output.String()),
-    data.Title,
+    title,
     c.FormValue("content"),
     c.FormValue("path"),
   }
   return ctrl.render(wc, "draft", pagedata)
+}
+
+func (ctrl *ContentController) BuildContent(wc mycontext.Context) (bytes.Buffer, string) {
+  tmpl := path.Join("themes", wc.Ctx.FormValue("theme"), "index.html")
+  draft := template.Must(template.ParseFiles(tmpl))
+  var output bytes.Buffer
+  data := struct {
+    Content template.HTML
+    Title string
+  }{
+    template.HTML(blackfriday.MarkdownBasic([]byte(wc.Ctx.FormValue("content")))),
+    wc.Ctx.FormValue("title"),
+  }
+  draft.Execute(&output, data )
+  return output, data.Title
+}
+
+func (ctrl *ContentController) contentData(wc mycontext.Context) {
+
 }
 
 /*
@@ -83,7 +97,46 @@ func (ctrl *ContentController) Create(c context.Context) error {
 */
 func (ctrl *ContentController) Publish(c context.Context) error {
   wc := mycontext.NewContext(c)
-  // s
-  var output bytes.Buffer
-  return goweb.Respond.With(wc.Ctx, 200, output.Bytes())
+
+  // load page data
+  output, title := ctrl.BuildContent(wc)
+  wc.Aec.Infof("Publishing %v", title)
+  var site models.Site;
+  if err := models.FindSiteFromEnc(wc, wc.Ctx.FormValue("site"), &site); err != nil {
+    wc.Aec.Errorf("Unable to find site: %v", err)
+    return err
+  }
+
+  // TODO save to datastore
+
+  // get oauth client
+  f, err := oauth2.New(
+    google.AppEngineContext(wc.Aec),
+    oauth2.Scope(
+      "https://www.googleapis.com/auth/devstorage.read_write",
+    ),
+  )
+  if err != nil {
+    wc.Aec.Errorf("cloud storage auth failed: %v", err)
+    // TODO return to /content/new with pagedata pre-filled
+    return err
+  }
+  client := http.Client{Transport: f.NewTransport()}
+
+  // do the cloud storage put operation
+  storeSvc, err := storage.New(&client)
+  if err != nil {
+    wc.Aec.Errorf("failed to get storage client: %v", err)
+    return err
+  }
+  obj := storage.NewObjectsService(storeSvc)
+  object := &storage.Object {
+    Bucket: site.Bucket,
+    ContentType: "text/html",
+    Name: wc.Ctx.FormValue("path"),
+  }
+
+  object, err = obj.Insert(site.Bucket, object).Media(base64.NewDecoder(base64.StdEncoding,&output)).Do()
+
+  return goweb.Respond.WithRedirect(wc.Ctx, "/content/new")
 }

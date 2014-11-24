@@ -30,6 +30,15 @@ func FetchSites(wc mycontext.Context, limit, offset int) ([]*Site, error) {
   return sites, err
 }
 
+func FindSiteFromEnc(wc mycontext.Context, enc string, s *Site) error {
+  k, err := datastore.DecodeKey(enc)
+  if err != nil {
+    wc.Aec.Errorf("failed to decode key: %v %v", enc, err)
+    return err
+  }
+  return FindSite(wc, k, s)
+}
+
 func FindSite(wc mycontext.Context, k *datastore.Key, s *Site) error {
   if err := datastore.Get(wc.Aec, k, s); err != nil {
     if err != datastore.ErrNoSuchEntity {
