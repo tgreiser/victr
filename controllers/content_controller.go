@@ -4,6 +4,7 @@ import (
   "bytes"
   "fmt"
   "html/template"
+  "path"
 
   "github.com/russross/blackfriday"
   "github.com/stretchr/goweb"
@@ -26,14 +27,20 @@ func (ctrl *ContentController) New(c context.Context) error {
   if err != nil || len(sites) == 0 {
     return goweb.Respond.WithRedirect(wc.Ctx, fmt.Sprintf("/sites/?msg=%s", wc.T("err_create_site")))
   }
-/*  themes, err := models.FetchThemes(wc)
-  if err || len(themes) == 0 {
+  def_site := sites[0]
+  wc.Aec.Infof("Def site theme: %v", def_site.Theme)
+  themes, err := models.FetchThemes(wc, def_site.Theme)
+  if err != nil || len(themes) == 0 {
     return ctrl.error(wc, "err_no_themes")
-  }*/
+  }
   data := struct {
     Sites []*models.Site
+    Errors map[string]string
+    Themes []*models.Theme
   } {
     sites,
+    map[string]string {},
+    themes,
   }
   return ctrl.render(wc, "new", data)
 }
@@ -43,7 +50,8 @@ func (ctrl *ContentController) Create(c context.Context) error {
 
   wc.Aec.Infof("Running create %v", c.FormValue("content"))
 
-  draft := template.Must(template.ParseFiles("themes/simple/index.html"))
+  tmpl := path.Join("themes", c.FormValue("theme"), "index.html")
+  draft := template.Must(template.ParseFiles(tmpl))
   var output bytes.Buffer
   data := struct {
     Content template.HTML

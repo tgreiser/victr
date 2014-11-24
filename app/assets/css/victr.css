@@ -32,6 +32,9 @@ ul li.form-group {
   padding-left: 20px;
 }
 
+.meta-data {
+  padding: 16px;
+}
 .meta-data .form-group {
   float: left;
   padding-right: 14px;

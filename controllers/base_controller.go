@@ -86,7 +86,7 @@ func (ctrl *BaseController) FormGroup(name string, errs map[string]string, label
     cls = cls + " alert alert-danger"
   }
   return template.HTML(fmt.Sprintf(`<div class="%s">
-      <label for=\"%s\">%s:</label>`, cls, name, label))
+      <label for="%s">%s:</label>`, cls, name, label))
 }
 func (ctrl *BaseController) FormGroupClose(name string, errs map[string]string) template.HTML {
   ret := "</div>"

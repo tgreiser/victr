@@ -7,16 +7,33 @@
 
 {{ define "page" }}
 <!-- Le input -->
-  <ul class="meta-data">
-    <li class="form-group">
-      <label for="title">Page Title:</label>
-      <input type="text" name="title" />
-    </li>
-    <li class="form-group">
-      <label for="path">Publish to Path:</label>
-      <input type="text" name="path" placeholder="index.html" />
-    </li>
-    <li class="form-wide">
+  <div class="meta-data">
+    {{ fg "site_id" .Errors "Site" }}
+      <select name="site_id" class="form-control">
+        {{ range $i, $elem := .Sites }}
+        <option value="{{$elem.Key.Encode}}">{{$elem.Name}}</option>
+        {{ end}}
+      </select>
+    {{ fg_close "site_id" .Errors }}
+
+    {{ fg "theme" .Errors "Theme" }}
+      <select name="theme" class="form-control">
+        {{ range $i, $elem := .Themes }}
+        <option value="{{$elem.Name}}" {{if $elem.Selected}}SELECTED{{end}}
+          >{{$elem.Name}}</option>
+        {{ end}}
+      </select>
+      {{ fg_close "theme" .Errors}}
+
+    {{ fg "title" .Errors "Page Title" }}
+      <input type="text" name="title" class="form-control" />
+    {{ fg_close "title" .Errors }}
+
+    {{ fg "path" .Errors "Publish to Path" }}
+      <input type="text" name="path" class="form-control" placeholder="index.html" />
+      {{ fg_close "path" .Errors }}
+
+    <div class="form-wide">
       <textarea id="pagedownMe" name="content" class="form-control" rows="10">
 This is the *first* editor.
 ------------------------------
@@ -25,8 +42,8 @@ Just plain **Markdown**, except that the input is sanitized:
  
 <marquee>I'm the ghost from the past!</marquee>
       </textarea>
-    </li>
-  </ul>
+    </div>
+  </div>
 </form>
 
     <!-- Le lift -->
