@@ -1,6 +1,7 @@
 package controllers
 
 import (
+  "appengine/datastore"
   "encoding/base64"
   "fmt"
   "html/template"
@@ -95,7 +96,16 @@ func (ctrl *ContentController) Create(c context.Context) error {
 func (ctrl *ContentController) Publish(c context.Context) error {
   wc := mycontext.NewContext(c)
 
-  content := models.NewContent(wc)
+  key, err := datastore.DecodeKey(wc.Ctx.FormValue("key"))
+  if err != nil {
+    wc.Aec.Errorf("Failed to decode site key, can not publish: %v %v", wc.Ctx.FormValue("site_id"), err)
+    return ctrl.renderNew(wc, "Could not publish", map[string]string{}, nil)
+  }
+  var content models.Content
+  if err := models.FindContent(wc, key, &content); err != nil {
+    wc.Aec.Errorf("Failed to load content, could not publish: %v %v", wc.Ctx.FormValue("site_id"), err)
+    return ctrl.renderNew(wc, "Could not publish", map[string]string{}, nil)
+  }
   output := content.Build(wc)
 
   // load page data
@@ -106,12 +116,14 @@ func (ctrl *ContentController) Publish(c context.Context) error {
     return err
   }
 
-  // TODO save to datastore
+  // save to datastore
+  content.Draft = false
   if err := content.Save(wc, models.NewContentKey(wc)); err != nil {
     return err
   }
 
   // get oauth client
+  wc.Aec.Infof("Getting oauth client")
   f, err := oauth2.New(
     google.AppEngineContext(wc.Aec),
     oauth2.Scope(
@@ -126,6 +138,7 @@ func (ctrl *ContentController) Publish(c context.Context) error {
   client := http.Client{Transport: f.NewTransport()}
 
   // do the cloud storage put operation
+  wc.Aec.Infof("Cloud storage put...")
   storeSvc, err := storage.New(&client)
   if err != nil {
     wc.Aec.Errorf("failed to get storage client: %v", err)
@@ -139,6 +152,10 @@ func (ctrl *ContentController) Publish(c context.Context) error {
   }
 
   object, err = obj.Insert(site.Bucket, object).Media(base64.NewDecoder(base64.StdEncoding,&output)).Do()
+  if err != nil {
+    wc.Aec.Errorf("Failed to store page: %v", err)
+    return ctrl.renderNew(wc, "Failed to upload published page!", map[string]string{}, &content)
+  }
 
-  return goweb.Respond.WithRedirect(wc.Ctx, "/content/new")
+  return goweb.Respond.WithRedirect(wc.Ctx, "/content/new?status=ok")
 }

@@ -22,7 +22,6 @@ func NewContent(wc mycontext.Context) *Content {
     Theme: wc.Ctx.FormValue("theme"),
     Title: wc.Ctx.FormValue("title"),
     Path: wc.Ctx.FormValue("path"),
-    Version: 0,
     Markdown: wc.Ctx.FormValue("content"),
   }
 
@@ -37,6 +36,17 @@ func NewContent(wc mycontext.Context) *Content {
   return content
 }
 
+func FindContent(wc mycontext.Context, k *datastore.Key, c *Content) error {
+  if err := datastore.Get(wc.Aec, k, c); err != nil {
+    if err != datastore.ErrNoSuchEntity {
+      wc.Aec.Errorf("datastore error with FindContent: %v", err)
+    }
+    return err
+  }
+  c.Key = k
+  return nil
+}
+
 type Content struct {
   Key *datastore.Key `datastore:"-"`
   SiteKey *datastore.Key
@@ -44,11 +54,9 @@ type Content struct {
   Title string
   Path string
   Draft bool
-  // if Draft=true, version is irrelevant
-  Version int
+  // version is achieved with CreatedAt
   Markdown string `datastore:",noindex"`
   CreatedAt time.Time
-  UpdatedAt time.Time
 }
 
 func (c *Content) Validate() map[string]string {
@@ -65,7 +73,6 @@ func (c *Content) Validate() map[string]string {
 func (c *Content) Save(wc mycontext.Context, key *datastore.Key) error {
   err := datastore.RunInTransaction(wc.Aec, func(aec appengine.Context) error {
     if c.Key == nil { c.CreatedAt = time.Now() }
-    c.UpdatedAt = time.Now()
     key, e := datastore.Put(aec, key, c)
     if e != nil {
       return e
