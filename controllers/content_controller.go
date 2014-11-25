@@ -1,17 +1,14 @@
 package controllers
 
 import (
-  "bytes"
   "encoding/base64"
   "fmt"
   "html/template"
   "net/http"
-  "path"
 
   "code.google.com/p/google-api-go-client/storage/v1"
   "github.com/golang/oauth2"
   "github.com/golang/oauth2/google"
-  "github.com/russross/blackfriday"
   "github.com/stretchr/goweb"
   "github.com/stretchr/goweb/context"
 
@@ -28,6 +25,10 @@ Show the markdown editor form
 */
 func (ctrl *ContentController) New(c context.Context) error {
   wc := mycontext.NewContext(c)
+  return ctrl.renderNew(wc, "", map[string]string{}, nil)
+}
+
+func (ctrl *ContentController) renderNew(wc mycontext.Context, message string, errs map[string]string, edit *models.Content) error {
   sites, err := models.FetchSites(wc, 100, 0)
   if err != nil || len(sites) == 0 {
     return goweb.Respond.WithRedirect(wc.Ctx, fmt.Sprintf("/sites/?msg=%s", wc.T("err_create_site")))
@@ -55,39 +56,35 @@ func (ctrl *ContentController) Create(c context.Context) error {
 
   wc.Aec.Infof("Running create %v", c.FormValue("content"))
 
-  output, title := ctrl.BuildContent(wc)
+  content := models.NewContent(wc)
+  content.Draft = true
 
+  if errs := content.Validate(); len(errs) > 0 {
+    msg := "Failed to validate content"
+    wc.Aec.Warningf("%v: #%v %v", msg, len(errs), errs)
+    return ctrl.renderNew(wc, msg, errs, content)
+  }
+
+  wc.Aec.Infof("Saving draft...")
+  if err := content.Save(wc, models.NewContentKey(wc)); err != nil {
+    return ctrl.renderNew(wc, "Failed to save content", map[string]string{}, content)
+  }
+
+  output := content.Build(wc)
   pagedata := struct {
     Draft template.HTML
     Title string
     Content string
     Path string
+    Key string
   } {
     template.HTML(output.String()),
-    title,
-    c.FormValue("content"),
-    c.FormValue("path"),
+    content.Title,
+    content.Markdown,
+    content.Path,
+    content.Key.Encode(),
   }
   return ctrl.render(wc, "draft", pagedata)
-}
-
-func (ctrl *ContentController) BuildContent(wc mycontext.Context) (bytes.Buffer, string) {
-  tmpl := path.Join("themes", wc.Ctx.FormValue("theme"), "index.html")
-  draft := template.Must(template.ParseFiles(tmpl))
-  var output bytes.Buffer
-  data := struct {
-    Content template.HTML
-    Title string
-  }{
-    template.HTML(blackfriday.MarkdownBasic([]byte(wc.Ctx.FormValue("content")))),
-    wc.Ctx.FormValue("title"),
-  }
-  draft.Execute(&output, data )
-  return output, data.Title
-}
-
-func (ctrl *ContentController) contentData(wc mycontext.Context) {
-
 }
 
 /*
@@ -98,16 +95,21 @@ func (ctrl *ContentController) contentData(wc mycontext.Context) {
 func (ctrl *ContentController) Publish(c context.Context) error {
   wc := mycontext.NewContext(c)
 
+  content := models.NewContent(wc)
+  output := content.Build(wc)
+
   // load page data
-  output, title := ctrl.BuildContent(wc)
-  wc.Aec.Infof("Publishing %v", title)
+  wc.Aec.Infof("Publishing %v", content.Title)
   var site models.Site;
-  if err := models.FindSiteFromEnc(wc, wc.Ctx.FormValue("site"), &site); err != nil {
+  if err := models.FindSite(wc, content.SiteKey, &site); err != nil {
     wc.Aec.Errorf("Unable to find site: %v", err)
     return err
   }
 
   // TODO save to datastore
+  if err := content.Save(wc, models.NewContentKey(wc)); err != nil {
+    return err
+  }
 
   // get oauth client
   f, err := oauth2.New(
@@ -133,7 +135,7 @@ func (ctrl *ContentController) Publish(c context.Context) error {
   object := &storage.Object {
     Bucket: site.Bucket,
     ContentType: "text/html",
-    Name: wc.Ctx.FormValue("path"),
+    Name: content.Path,
   }
 
   object, err = obj.Insert(site.Bucket, object).Media(base64.NewDecoder(base64.StdEncoding,&output)).Do()

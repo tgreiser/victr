@@ -1,9 +1,6 @@
 {{ define "nav-form" }}
         <form method="POST" action="/content/publish">
-          Title: {{ .Title }}
-          <input type="hidden" name="content" value="{{ .Content }}" />
-          <input type="hidden" name="title" value="{{ .Title }}" />
-          <input type="hidden" name="path" value="{{ .Path }}" />
+          <input type="hidden" name="key" value="{{ .Key }}" />
           <input type="submit" class="btn btn-default" value="Publish" />
           <button id="edit" class="btn btn-default" value="Edit">Edit</button>
         </form>
