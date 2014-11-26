@@ -91,12 +91,17 @@ func (c *Content) Build(wc mycontext.Context) bytes.Buffer {
   tmpl := path.Join("themes", c.Theme, "index.html")
   draft := template.Must(template.ParseFiles(tmpl))
   var output bytes.Buffer
+  path := "http://"
+  if wc.Ctx.HttpRequest().TLS != nil { path = "https://" }
+  path = path + appengine.DefaultVersionHostname(wc.Aec) + "/themes/" + c.Theme + "/"
   data := struct {
     Content template.HTML
     Title string
+    ThemePath string
   }{
     template.HTML(blackfriday.MarkdownBasic([]byte(c.Markdown))),
     c.Title,
+    path,
   }
   draft.Execute(&output, data )
   return output

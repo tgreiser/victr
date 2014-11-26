@@ -2,7 +2,7 @@ package controllers
 
 import (
   "appengine/datastore"
-  "encoding/base64"
+  "bytes"
   "fmt"
   "html/template"
   "net/http"
@@ -151,7 +151,7 @@ func (ctrl *ContentController) Publish(c context.Context) error {
     Name: content.Path,
   }
 
-  object, err = obj.Insert(site.Bucket, object).Media(base64.NewDecoder(base64.StdEncoding,&output)).Do()
+  object, err = obj.Insert(site.Bucket, object).Media(bytes.NewReader(output.Bytes())).Do()
   if err != nil {
     wc.Aec.Errorf("Failed to store page: %v", err)
     return ctrl.renderNew(wc, "Failed to upload published page!", map[string]string{}, &content)
