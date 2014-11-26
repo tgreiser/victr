@@ -49,3 +49,7 @@ ul li.form-group {
 html body .alert {
   padding: 8px;
 }
+
+.content-list td {
+  padding: 8px;
+}

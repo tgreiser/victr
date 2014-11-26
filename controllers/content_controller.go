@@ -21,6 +21,34 @@ type ContentController struct {
   BaseController
 }
 
+func (ctrl *ContentController) ReadMany(c context.Context) error {
+  wc := mycontext.NewContext(c)
+  wc.Aec.Infof("Content ReadMany")
+
+  limit := 100
+  offset := 0
+
+  sites, def_site, err := ctrl.prepSites(wc)
+  if err != nil { return err }
+
+  contents, err := models.FetchContent(wc, def_site.Key, limit, offset)
+  if err != nil {
+    msg := "Unable to find site contents!"
+    ctrl.error(wc, msg)
+    wc.Aec.Errorf("%v: %v", msg, err)
+  }
+
+  return ctrl.render(wc, "content", struct {
+    Contents []*models.Content
+    Sites []*models.Site
+    Message string
+  } {
+    contents,
+    sites,
+    "",
+  })
+}
+
 /*
 Show the markdown editor form
 */
@@ -29,13 +57,20 @@ func (ctrl *ContentController) New(c context.Context) error {
   return ctrl.renderNew(wc, "", map[string]string{}, nil)
 }
 
-func (ctrl *ContentController) renderNew(wc mycontext.Context, message string, errs map[string]string, edit *models.Content) error {
+func (ctrl* ContentController) prepSites(wc mycontext.Context) ([]*models.Site, *models.Site, error) {
   sites, err := models.FetchSites(wc, 100, 0)
   if err != nil || len(sites) == 0 {
-    return goweb.Respond.WithRedirect(wc.Ctx, fmt.Sprintf("/sites/?msg=%s", wc.T("err_create_site")))
+    return nil, nil, goweb.Respond.WithRedirect(wc.Ctx, fmt.Sprintf("/sites/?msg=%s", wc.T("err_create_site")))
   }
   def_site := sites[0]
   wc.Aec.Infof("Def site theme: %v", def_site.Theme)
+
+  return sites, def_site, nil
+}
+
+func (ctrl *ContentController) renderNew(wc mycontext.Context, message string, errs map[string]string, edit *models.Content) error {
+  sites, def_site, err := ctrl.prepSites(wc)
+  if err != nil { return err }
   themes, err := models.FetchThemes(wc, def_site.Theme)
   if err != nil || len(themes) == 0 {
     return ctrl.error(wc, "err_no_themes")
@@ -120,7 +155,7 @@ func (ctrl *ContentController) Publish(c context.Context) error {
 
   // save to datastore
   content.Draft = false
-  if err := content.Save(wc, models.NewContentKey(wc)); err != nil {
+  if err := content.Save(wc, content.Key); err != nil {
     return err
   }
 
