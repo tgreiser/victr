@@ -116,7 +116,7 @@ func (ctrl *SitesController) Create(c context.Context) error {
 
   // save
   wc.Aec.Infof("Saving...")
-  if err := site.Save(wc, models.NewSiteKey(wc, site.URL)); err != nil {
+  if err := site.Save(wc, models.NewSiteKey(wc)); err != nil {
     msg := "Failed to save"
     wc.Aec.Errorf("msg %v", err)
     return ctrl.renderSites(wc, msg, map[string]string { }, site)

@@ -8,8 +8,8 @@ import (
   mycontext "github.com/tgreiser/victr/context"
 )
 
-func NewSiteKey(wc mycontext.Context, url string) *datastore.Key {
-  return datastore.NewKey(wc.Aec, "Site", url, 0, nil)
+func NewSiteKey(wc mycontext.Context) *datastore.Key {
+  return datastore.NewIncompleteKey(wc.Aec, "Site", nil)
 }
 
 func FetchSites(wc mycontext.Context, limit, offset int) ([]*Site, error) {
