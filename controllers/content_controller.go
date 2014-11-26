@@ -44,10 +44,12 @@ func (ctrl *ContentController) renderNew(wc mycontext.Context, message string, e
     Sites []*models.Site
     Errors map[string]string
     Themes []*models.Theme
+    Message template.HTML
   } {
     sites,
-    map[string]string {},
+    errs,
     themes,
+    template.HTML(message),
   }
   return ctrl.render(wc, "new", data)
 }
@@ -157,5 +159,6 @@ func (ctrl *ContentController) Publish(c context.Context) error {
     return ctrl.renderNew(wc, "Failed to upload published page!", map[string]string{}, &content)
   }
 
-  return goweb.Respond.WithRedirect(wc.Ctx, "/content/new?status=ok")
+  msg := "Page published at <a href=\"" + content.LiveUrl(wc) + "\" target=\"_blank\">" + content.LiveUrl(wc) +"</a>"
+  return ctrl.renderNew(wc, msg, map[string]string{}, nil)
 }

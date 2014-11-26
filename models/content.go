@@ -106,3 +106,12 @@ func (c *Content) Build(wc mycontext.Context) bytes.Buffer {
   draft.Execute(&output, data )
   return output
 }
+
+func (c *Content) LiveUrl(wc mycontext.Context) string {
+  var site Site
+  if e := FindSite(wc, c.SiteKey, &site); e != nil {
+    wc.Aec.Errorf("error building URL, no site: %v", e)
+    return "#"
+  }
+  return site.URL + "/" + c.Path
+}

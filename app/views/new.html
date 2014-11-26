@@ -8,6 +8,7 @@
 {{ define "page" }}
 <!-- Le input -->
   <div class="meta-data">
+    {{ if .Message }}<div class="message alert alert-danger">{{ .Message }}</div>{{end}}
     {{ fg "site_id" .Errors "Site" }}
       <select name="site_id" class="form-control">
         {{ range $i, $elem := .Sites }}
