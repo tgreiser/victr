@@ -27,21 +27,15 @@
       {{ fg_close "theme" .Errors}}
 
     {{ fg "title" .Errors "Page Title" }}
-      <input type="text" name="title" class="form-control" />
+      <input type="text" name="title" class="form-control" value="{{ .Content.Title }}" />
     {{ fg_close "title" .Errors }}
 
     {{ fg "path" .Errors "Publish to Path" }}
-      <input type="text" name="path" class="form-control" placeholder="index.html" />
+      <input type="text" name="path" class="form-control" placeholder="index.html" value="{{if .Page }}{{ .Page.Path }}{{end}}" />
       {{ fg_close "path" .Errors }}
 
     <div class="form-wide">
-      <textarea id="pagedownMe" name="content" class="form-control" rows="10">
-This is the *first* editor.
-------------------------------
- 
-Just plain **Markdown**, except that the input is sanitized:
- 
-<marquee>I'm the ghost from the past!</marquee>
+      <textarea id="pagedownMe" name="content" class="form-control" rows="10">{{ .Content.Markdown }}
       </textarea>
     </div>
   </div>

@@ -76,17 +76,33 @@ func (ctrl *ContentController) renderNew(wc mycontext.Context, message string, e
   if err != nil || len(themes) == 0 {
     return ctrl.error(wc, "err_no_themes")
   }
+  if edit == nil {
+    edit = &models.Content{
+      Markdown: `This is the *first* editor.
+------------------------------
+
+Just plain **Markdown**, except that the input is sanitized:
+
+<marquee>I'm the ghost from the past!</marquee>`,
+    }
+  }
+  wc.Aec.Infof("Got content: %v", edit)
   data := struct {
     Sites []*models.Site
     Errors map[string]string
     Themes []*models.Theme
     Message template.HTML
+    Content *models.Content
+    Page *models.Page
   } {
     sites,
     errs,
     themes,
     template.HTML(message),
+    edit,
+    page,
   }
+//  wc.Aec.Infof("Page data: %v %v", edit.Title, page.Path)
   return ctrl.render(wc, "new", data)
 }
 
@@ -101,7 +117,7 @@ func (ctrl *ContentController) Create(c context.Context) error {
   if len(errs) > 0 {
     msg := "Failed to validate new page"
     wc.Aec.Warningf("%v: #%v %v", msg, len(errs), errs)
-    return ctrl.renderNew(wc, msg, errs, nil, page)
+    return ctrl.renderNew(wc, msg, errs, models.NewContent(wc, page.Key), page)
   }
 
   err := datastore.RunInTransaction(wc.Aec, func(c appengine.Context) error {
