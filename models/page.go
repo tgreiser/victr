@@ -38,27 +38,25 @@ func FindPage(wc mycontext.Context, k *datastore.Key, p *Page) error {
   return nil
 }
 
-func FindPageByPath(wc mycontext.Context, site_key *datastore.Key, path string, p *Page) error {
+func FetchPageByPath(wc mycontext.Context, site_key *datastore.Key, path string) (*Page, error) {
   q := datastore.NewQuery("Page").Filter("Path=", path).Filter("SiteKey=", site_key).Limit(1)
-  pages := make([]*Page, 1, 1)
+  pages := make([]*Page, 0, 1)
   keys, err := q.GetAll(wc.Aec, &pages)
   if _, ok := err.(*datastore.ErrFieldMismatch); ok {
     wc.Aec.Infof("datastore missing field, ignoring: %v", err)
     err = nil
   } else if err != nil {
     wc.Aec.Errorf("got error instead of page: %v", err)
-    return err
+    return nil, err
   } else if len(keys) > 0 {
-    p = pages[0]
-    wc.Aec.Infof("Got keys: %v", keys)
-    wc.Aec.Infof("Got Pages: %v", pages)
-    p.Key = keys[0]
+    pages[0].Key = keys[0]
+    wc.Aec.Infof("Loaded page: %v", pages[0])
+    return pages[0], nil
   } else {
-    wc.Aec.Infof("Returning nil page")
-    p = nil
+    wc.Aec.Infof("Returning nil page - err no such entity")
     err = datastore.ErrNoSuchEntity
   }
-  return err
+  return nil, err
 }
 
 type Page struct {
@@ -80,15 +78,15 @@ func (p *Page) Validate(wc mycontext.Context) map[string]string {
 
   if p.CurrentVersion == 1 {
     // first save, verify the page isn't a name conflict
-    var page Page
-    err := FindPageByPath(wc, p.SiteKey, p.Path, &page)
+    page, err := FetchPageByPath(wc, p.SiteKey, p.Path)
     if err != nil && err != datastore.ErrNoSuchEntity {
       wc.Aec.Errorf("path lookup err: %v", err)
       ret["path"] = "An error occurred when validating your path. Is it correct? (<something>.html)"
     } else if err == nil {
-      wc.Aec.Infof("Found page: %v", page)
+      skey := NiceKey(page.Key)
+      wc.Aec.Infof("Found page: %v %v", page.Key, skey)
       ret["path"] = "You entered a path for an existing page, copy your content, then " +
-        "<a href=\"/content/" + page.Key.StringID() + "\">click here.</a>"
+        "<a href=\"/content/" + skey + "\">click here.</a>"
     }
   }
 

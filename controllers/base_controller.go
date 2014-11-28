@@ -38,7 +38,6 @@ func (ctrl *BaseController) render(wc mycontext.Context, main string, data inter
     template.HTML(nav.String()),
     template.HTML(page.String()),
   }
-  wc.Aec.Infof("Got nav: %v", pagedata.NavForm)
   if e := t.ExecuteTemplate(&output, "base", pagedata); e != nil {
     // unfortunately, this doesn't seem to fire if the template crashes mid-render due to a func error
     wc.Aec.Errorf("Failed to render: %v", e)
