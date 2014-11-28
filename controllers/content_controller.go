@@ -1,6 +1,7 @@
 package controllers
 
 import (
+  "appengine"
   "appengine/datastore"
   "bytes"
   "fmt"
@@ -54,7 +55,7 @@ Show the markdown editor form
 */
 func (ctrl *ContentController) New(c context.Context) error {
   wc := mycontext.NewContext(c)
-  return ctrl.renderNew(wc, "", map[string]string{}, nil)
+  return ctrl.renderNew(wc, "", map[string]string{}, nil, nil)
 }
 
 func (ctrl* ContentController) prepSites(wc mycontext.Context) ([]*models.Site, *models.Site, error) {
@@ -68,7 +69,7 @@ func (ctrl* ContentController) prepSites(wc mycontext.Context) ([]*models.Site, 
   return sites, def_site, nil
 }
 
-func (ctrl *ContentController) renderNew(wc mycontext.Context, message string, errs map[string]string, edit *models.Content) error {
+func (ctrl *ContentController) renderNew(wc mycontext.Context, message string, errs map[string]string, edit *models.Content, page *models.Page) error {
   sites, def_site, err := ctrl.prepSites(wc)
   if err != nil { return err }
   themes, err := models.FetchThemes(wc, def_site.Theme)
@@ -94,18 +95,44 @@ func (ctrl *ContentController) Create(c context.Context) error {
 
   wc.Aec.Infof("Running create %v", c.FormValue("content"))
 
-  content := models.NewContent(wc)
-  content.Draft = true
-
-  if errs := content.Validate(); len(errs) > 0 {
-    msg := "Failed to validate content"
+  content := &models.Content{}
+  page := models.NewPage(wc)
+  errs := page.Validate(wc)
+  if len(errs) > 0 {
+    msg := "Failed to validate new page"
     wc.Aec.Warningf("%v: #%v %v", msg, len(errs), errs)
-    return ctrl.renderNew(wc, msg, errs, content)
+    return ctrl.renderNew(wc, msg, errs, nil, page)
   }
 
-  wc.Aec.Infof("Saving draft...")
-  if err := content.Save(wc, models.NewContentKey(wc)); err != nil {
-    return ctrl.renderNew(wc, "Failed to save content", map[string]string{}, content)
+  err := datastore.RunInTransaction(wc.Aec, func(c appengine.Context) error {
+    if err := page.Save(wc, models.NewPageKey(wc)); err != nil {
+      return ctrl.renderNew(wc, "Failed to save page", map[string]string{}, nil, page)
+    }
+
+    content = models.NewContent(wc, page.Key)
+    content.Draft = true
+    wc.Aec.Infof("Content %v", content)
+    errs2 := content.Validate()
+    for k, v := range errs2 {
+      errs[k] = v
+    }
+
+    wc.Aec.Infof("Saving draft...")
+    if err := content.Save(wc, models.NewContentKey(wc)); err != nil {
+      return ctrl.renderNew(wc, "Failed to save content", map[string]string{}, content, page)
+    }
+
+    page.CurrentVersionKey = content.Key
+    if err := page.Save(wc, page.Key); err != nil {
+      return ctrl.renderNew(wc, "Failed to save page", map[string]string{}, content, page)
+    }
+
+    return nil
+  }, nil)
+  if err != nil {
+    msg := "Failed to save new page"
+    wc.Aec.Errorf("%v: %v", msg, err)
+    return ctrl.renderNew(wc, msg, map[string]string{}, content, page)
   }
 
   output := content.Build(wc)
@@ -119,7 +146,7 @@ func (ctrl *ContentController) Create(c context.Context) error {
     template.HTML(output.String()),
     content.Title,
     content.Markdown,
-    content.Path,
+    page.Path,
     content.Key.Encode(),
   }
   return ctrl.render(wc, "draft", pagedata)
@@ -135,20 +162,25 @@ func (ctrl *ContentController) Publish(c context.Context) error {
 
   key, err := datastore.DecodeKey(wc.Ctx.FormValue("key"))
   if err != nil {
-    wc.Aec.Errorf("Failed to decode site key, can not publish: %v %v", wc.Ctx.FormValue("site_id"), err)
-    return ctrl.renderNew(wc, "Could not publish", map[string]string{}, nil)
+    wc.Aec.Errorf("Failed to decode site key, can not publish: %v %v", wc.Ctx.FormValue("key"), err)
+    return ctrl.renderNew(wc, "Could not publish", map[string]string{}, nil, nil)
   }
   var content models.Content
   if err := models.FindContent(wc, key, &content); err != nil {
-    wc.Aec.Errorf("Failed to load content, could not publish: %v %v", wc.Ctx.FormValue("site_id"), err)
-    return ctrl.renderNew(wc, "Could not publish", map[string]string{}, nil)
+    wc.Aec.Errorf("Failed to load content, could not publish: %v %v", key, err)
+    return ctrl.renderNew(wc, "Could not publish", map[string]string{}, nil, nil)
+  }
+  var page models.Page
+  if err := models.FindPage(wc, content.PageKey, &page); err != nil {
+    wc.Aec.Errorf("Failed to load page, could not publish: %v %v", key, err)
+    return ctrl.renderNew(wc, "Could not publish", map[string]string{}, &content, nil)
   }
   output := content.Build(wc)
 
   // load page data
   wc.Aec.Infof("Publishing %v", content.Title)
   var site models.Site;
-  if err := models.FindSite(wc, content.SiteKey, &site); err != nil {
+  if err := models.FindSite(wc, page.SiteKey, &site); err != nil {
     wc.Aec.Errorf("Unable to find site: %v", err)
     return err
   }
@@ -185,15 +217,15 @@ func (ctrl *ContentController) Publish(c context.Context) error {
   object := &storage.Object {
     Bucket: site.Bucket,
     ContentType: "text/html",
-    Name: content.Path,
+    Name: page.Path,
   }
 
   object, err = obj.Insert(site.Bucket, object).Media(bytes.NewReader(output.Bytes())).Do()
   if err != nil {
     wc.Aec.Errorf("Failed to store page: %v", err)
-    return ctrl.renderNew(wc, "Failed to upload published page!", map[string]string{}, &content)
+    return ctrl.renderNew(wc, "Failed to upload published page!", map[string]string{}, &content, &page)
   }
 
-  msg := "Page published at <a href=\"" + content.LiveUrl(wc) + "\" target=\"_blank\">" + content.LiveUrl(wc) +"</a>"
-  return ctrl.renderNew(wc, msg, map[string]string{}, nil)
+  msg := "Page published at <a href=\"" + page.LiveUrl(wc) + "\" target=\"_blank\">" + page.LiveUrl(wc) +"</a>"
+  return ctrl.renderNew(wc, msg, map[string]string{}, nil, nil)
 }

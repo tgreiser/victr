@@ -17,22 +17,14 @@ func NewContentKey(wc mycontext.Context) *datastore.Key {
   return datastore.NewIncompleteKey(wc.Aec, "Content", nil)
 }
 
-func NewContent(wc mycontext.Context) *Content {
+func NewContent(wc mycontext.Context, page_key *datastore.Key) *Content {
   content := &Content {
     Theme: wc.Ctx.FormValue("theme"),
     Title: wc.Ctx.FormValue("title"),
-    Path: wc.Ctx.FormValue("path"),
     Markdown: wc.Ctx.FormValue("content"),
+    PageKey: page_key,
   }
 
-  sitekey, err := datastore.DecodeKey(wc.Ctx.FormValue("site_id"))
-  if err != nil {
-    wc.Aec.Warningf("Failed to decode site key: %v %v", wc.Ctx.FormValue("site_id"), err)
-    return content
-  }
-  content.SiteKey = sitekey
-  wc.Aec.Infof("Params: %v", wc.Ctx.FormParams())
-  wc.Aec.Infof("New content - site key: %v %v", wc.Ctx.FormValue("site_id"), sitekey)
   return content
 }
 
@@ -72,10 +64,9 @@ func FetchContent(wc mycontext.Context, site_key *datastore.Key, limit, offset i
 
 type Content struct {
   Key *datastore.Key `datastore:"-"`
-  SiteKey *datastore.Key
+  PageKey *datastore.Key
   Theme string
   Title string
-  Path string
   Draft bool
   // version is achieved with CreatedAt
   Markdown string `datastore:",noindex"`
@@ -87,9 +78,8 @@ func (c *Content) Validate() map[string]string {
 
   if c.Theme == "" { ret["theme"] = "Please select a theme to use" }
   if c.Title == "" { ret["title"] = "Please enter a title for your page" }
-  if c.Path == "" { ret["path"] = "Please enter the relative path where your file will be published" }
-  if c.Markdown == "" { ret["markdown"] = "Please enter some content." }
-  if c.SiteKey == nil { ret["site"] = "Please select a site" }
+  if c.Markdown == "" { ret["markdown"] = "Please enter some content" }
+  if c.PageKey == nil { ret["site_id"] = "Please select a page" }
   return ret
 }
 
@@ -128,13 +118,4 @@ func (c *Content) Build(wc mycontext.Context) bytes.Buffer {
   }
   draft.Execute(&output, data )
   return output
-}
-
-func (c *Content) LiveUrl(wc mycontext.Context) string {
-  var site Site
-  if e := FindSite(wc, c.SiteKey, &site); e != nil {
-    wc.Aec.Errorf("error building URL, no site: %v", e)
-    return "#"
-  }
-  return site.URL + "/" + c.Path
 }
