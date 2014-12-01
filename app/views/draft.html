@@ -2,17 +2,8 @@
         <form method="POST" action="/content/publish">
           <input type="hidden" name="key" value="{{ .Key }}" />
           <input type="submit" class="btn btn-default" value="Publish" />
-          <button id="edit" class="btn btn-default" value="Edit">Edit</button>
+          <a href="/content/{{ .PageKey }}" id="edit" class="btn btn-default" value="Edit">Edit</a>
         </form>
-        <script>
-$(document).ready(function() {
-    $('#edit').click(function() {
-      // browser back
-      history.go(-1);
-      return false;
-      });
-    });
-        </script>
 {{ end }}
 {{ define "page" }}
     {{ .Draft }}

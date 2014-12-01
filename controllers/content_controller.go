@@ -193,12 +193,14 @@ func (ctrl *ContentController) Create(c context.Context) error {
     Content string
     Path string
     Key string
+    PageKey string
   } {
     template.HTML(output.String()),
     content.Title,
     content.Markdown,
     page.Path,
     content.Key.Encode(),
+    models.NiceKey(page.Key),
   }
   return ctrl.render(wc, "draft", pagedata)
 }
