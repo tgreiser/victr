@@ -18,8 +18,42 @@ import (
   "github.com/tgreiser/victr/models"
 )
 
+/*
+This controller is poorly named, but it manages both content and pages
+Content are the versioned entities
+Pages hold the current view and metadata
+*/
 type ContentController struct {
   BaseController
+}
+
+func (ctrl *ContentController) Read(key string, c context.Context) error {
+  wc := mycontext.NewContext(c)
+  wc.Aec.Infof("Content Read (browse versions)")
+
+  msg := ""
+  var p models.Page
+  k := models.DsKey(wc, "Page", key)
+  if err := models.FindPage(wc, k, &p); err != nil {
+    wc.Aec.Infof("Page not found: %v %v %v", k, key, err)
+    return ctrl.error(wc, "Page not found")
+  }
+
+  return ctrl.renderRead(wc, msg, &p)
+}
+
+func (ctrl *ContentController) renderRead(wc mycontext.Context, message string, page *models.Page) error {
+  // load all the versions for this page
+
+  data := struct {
+    Message string
+    Page *models.Page
+  } {
+    message,
+    page,
+  }
+
+  return ctrl.render(wc, "pageview", data)
 }
 
 func (ctrl *ContentController) ReadMany(c context.Context) error {

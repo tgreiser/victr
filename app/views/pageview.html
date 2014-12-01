@@ -1,0 +1,15 @@
+{{ define "form" }}
+  <form method="GET" action="/content/">
+{{ end }}
+{{ define "nav-form" }}
+  Version {{ .Page.CurrentVersion }} of
+{{ end }}
+
+{{ define "page" }}
+  <div class="meta-data">
+    <h4>Hidden Edit form</h4>
+    {{ if .Message }}<div class="message alert alert-danger">{{ .Message }}</div>{{end}}
+  </div>
+  <div class="preview">
+  </div>
+{{ end }}
