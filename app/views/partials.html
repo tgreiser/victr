@@ -1,0 +1,33 @@
+{{ define "content-form" }}
+    {{ if .Message }}<div class="message alert alert-danger">{{ .Message }}</div>{{end}}
+    {{ fg "site_id" .Errors "Site" }}
+      <select name="site_id" class="form-control">
+        {{ range $i, $elem := .Sites }}
+        <option value="{{$elem.Key.Encode}}">{{$elem.Name}}</option>
+        {{ end}}
+      </select>
+    {{ fg_close "site_id" .Errors }}
+
+    {{ fg "theme" .Errors "Theme" }}
+      <select name="theme" class="form-control">
+        {{ range $i, $elem := .Themes }}
+        <option value="{{$elem.Name}}" {{if $elem.Selected}}SELECTED{{end}}
+          >{{$elem.Name}}</option>
+        {{ end}}
+      </select>
+      {{ fg_close "theme" .Errors}}
+
+    {{ fg "title" .Errors "Page Title" }}
+      <input type="text" name="title" class="form-control" value="{{ .Content.Title }}" />
+    {{ fg_close "title" .Errors }}
+
+    {{ fg "path" .Errors "Publish to Path" }}
+      <input type="text" name="path" class="form-control" placeholder="index.html" value="{{if .Page }}{{ .Page.Path }}{{end}}" />
+      {{ fg_close "path" .Errors }}
+
+    <div class="form-wide">
+      <textarea id="pagedownMe" name="content" class="form-control" rows="10">{{ .Content.Markdown }}
+      </textarea>
+    </div>
+
+{{ end }}

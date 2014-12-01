@@ -20,11 +20,18 @@ func (ctrl *BaseController) render(wc mycontext.Context, main string, data inter
   t := template.New("temp").Funcs(ctrl.funcMap())
   t = template.Must(t.ParseFiles(matches...))
   var nav bytes.Buffer
-  t.ExecuteTemplate(&nav, "nav-form", data )
+  if e := t.ExecuteTemplate(&nav, "nav-form", data ); e != nil {
+    wc.Aec.Errorf("Template err: %v", e)
+  }
   var form bytes.Buffer
-  t.ExecuteTemplate(&form, "form", data)
+  if e := t.ExecuteTemplate(&form, "form", data); e != nil {
+    wc.Aec.Errorf("Template err: %v", e)
+  }
+
   var page bytes.Buffer
-  t.ExecuteTemplate(&page, "page", data)
+  if e := t.ExecuteTemplate(&page, "page", data); e != nil {
+    wc.Aec.Errorf("Template err: %v", e)
+  }
 
   var output bytes.Buffer
   pagedata := struct {
@@ -57,9 +64,10 @@ func (ctrl *BaseController) error(wc mycontext.Context, msg_id string) error {
 }
 
 func (ctrl *BaseController) templates(wc mycontext.Context, main string) ([]string, error) {
-  var matches [2]string
-  matches[0] = mycontext.AppPath(filepath.Join("views", main + ".html"))
-  matches[1] = mycontext.AppPath(filepath.Join("views", "base.html"))
+  var matches [3]string
+  matches[0] = mycontext.AppPath(filepath.Join("views", "partials.html"))
+  matches[1] = mycontext.AppPath(filepath.Join("views", main + ".html"))
+  matches[2] = mycontext.AppPath(filepath.Join("views", "base.html"))
   return matches[0:], nil
 }
 
