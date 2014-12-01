@@ -1,0 +1,38 @@
+{{ define "form" }}
+  <form method="GET" action="/content/">
+{{ end }}
+{{ define "nav-form" }}
+{{ end }}
+
+{{ define "page" }}
+  <div class="meta-data">
+    <h4>Pages</h4>
+    {{ if .Message }}<div class="message alert alert-danger">{{ .Message }}</div>{{end}}
+    Found: #{{ len .Pages }}
+    <table class="content-list table table-striped table-hover">
+      <tr>
+        <th>Path</th>
+        <th>Version</th>
+        <th>Updated</th>
+        <th>Created</th>
+        <th>&nbsp;</th>
+      </tr>
+    {{ range $i, $elem := .Pages }}
+      <tr>
+        <td><a href="{{ $elem.Url }}" target="_blank">{{ $elem.Path }}</a></td>
+        <td>{{ $elem.CurrentVersion}}</td>
+        <td>{{ $elem.UpdatedAt }}</td>
+        <td>{{ $elem.CreatedAt }}</td>
+        <td class="controls">
+          <a href="/content/{{$elem.NiceKey}}" class="btn btn-default">Edit</a>
+          {{if $elem.Published }}
+            <a href="/content/unpublish/{{$elem.NiceKey}}" class="btn btn-warning">Unpublish</a>
+          {{else}}
+            <a href="/content/publish/{{$elem.NiceKey}}" class="btn btn-warning">Publish</a>
+          {{end}}
+        </td>
+      </tr>
+    {{ end }}
+    </table>
+  </div>
+{{ end }}

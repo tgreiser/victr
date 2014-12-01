@@ -23,6 +23,7 @@ func NewPage(wc mycontext.Context) *Page {
     return page
   }
   page.SiteKey = sitekey
+  page.Init(wc)
   return page
 }
 
@@ -34,6 +35,7 @@ func FindPage(wc mycontext.Context, k *datastore.Key, p *Page) error {
     return err
   }
   p.Key = k
+  p.Init(wc)
   wc.Aec.Infof("Page found: %v", p)
   return nil
 }
@@ -50,6 +52,7 @@ func FetchPageByPath(wc mycontext.Context, site_key *datastore.Key, path string)
     return nil, err
   } else if len(keys) > 0 {
     pages[0].Key = keys[0]
+    pages[0].Init(wc)
     wc.Aec.Infof("Loaded page: %v", pages[0])
     return pages[0], nil
   } else {
@@ -58,6 +61,30 @@ func FetchPageByPath(wc mycontext.Context, site_key *datastore.Key, path string)
   }
   return nil, err
 }
+
+func FetchPages(wc mycontext.Context, site_key *datastore.Key, limit, offset int) ([]*Page, error) {
+  q := datastore.NewQuery("Page").
+    Order("-UpdatedAt").
+    Limit(limit).
+    Offset(offset)
+  pages := make([]*Page, 0, limit)
+  keys, err := q.GetAll(wc.Aec, &pages)
+  if _, ok := err.(*datastore.ErrFieldMismatch); ok {
+    wc.Aec.Infof("datastore missing field, ignoring: %v", err)
+    err = nil
+  } else if err != nil {
+    wc.Aec.Errorf("got error instead of content list: %v", err)
+    return nil, err
+  }
+
+  for i, k := range keys {
+    pages[i].Key = k
+    pages[i].Init(wc)
+    wc.Aec.Infof("Pages: %v", pages[i])
+  }
+  return pages, err
+}
+
 
 type Page struct {
   Key *datastore.Key `datastore:"-"`
@@ -68,6 +95,13 @@ type Page struct {
   CreatedAt time.Time
   UpdatedAt time.Time
   Published bool
+  Url string `datastore:"-"`
+  NiceKey string `datastore:"-"`
+}
+
+func (p *Page) Init(wc mycontext.Context) {
+  p.NiceKey = NiceKey(p.Key)
+  p.Url = p.LiveUrl(wc)
 }
 
 func (p *Page) Validate(wc mycontext.Context) map[string]string {
@@ -111,6 +145,7 @@ func (p *Page) Save(wc mycontext.Context, key *datastore.Key) error {
 }
 
 func (p *Page) LiveUrl(wc mycontext.Context) string {
+  wc.Aec.Infof("Page LiveURL: %v", p)
   var site Site
   if e := FindSite(wc, p.SiteKey, &site); e != nil {
     wc.Aec.Errorf("error building URL, no site: %v", e)

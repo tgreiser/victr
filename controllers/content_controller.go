@@ -32,7 +32,7 @@ func (ctrl *ContentController) ReadMany(c context.Context) error {
   sites, def_site, err := ctrl.prepSites(wc)
   if err != nil { return err }
 
-  contents, err := models.FetchContent(wc, def_site.Key, limit, offset)
+  pages, err := models.FetchPages(wc, def_site.Key, limit, offset)
   if err != nil {
     msg := "Unable to find site contents!"
     ctrl.error(wc, msg)
@@ -40,11 +40,11 @@ func (ctrl *ContentController) ReadMany(c context.Context) error {
   }
 
   return ctrl.render(wc, "content", struct {
-    Contents []*models.Content
+    Pages []*models.Page
     Sites []*models.Site
     Message string
   } {
-    contents,
+    pages,
     sites,
     "",
   })

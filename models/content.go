@@ -39,29 +39,6 @@ func FindContent(wc mycontext.Context, k *datastore.Key, c *Content) error {
   return nil
 }
 
-func FetchContent(wc mycontext.Context, site_key *datastore.Key, limit, offset int) ([]*Content, error) {
-  q := datastore.NewQuery("Content").
-    Project("SiteKey", "Path", "Title").Distinct().
-    Order("Title").
-    Limit(limit).
-    Offset(offset)
-  contents := make([]*Content, 0, limit)
-  keys, err := q.GetAll(wc.Aec, &contents)
-  if _, ok := err.(*datastore.ErrFieldMismatch); ok {
-    wc.Aec.Infof("datastore missing field, ignoring: %v", err)
-    err = nil
-  } else if err != nil {
-    wc.Aec.Errorf("got error instead of content list: %v", err)
-    return nil, err
-  }
-
-  for i, k := range keys {
-    contents[i].Key = k
-    wc.Aec.Infof("Contents: %v", contents[i])
-  }
-  return contents, err
-}
-
 type Content struct {
   Key *datastore.Key `datastore:"-"`
   PageKey *datastore.Key
