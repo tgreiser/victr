@@ -24,9 +24,6 @@ func init() {
 
   content := new(controllers.ContentController)
   handler.MapController(content)
-  handler.Map("GET", "/content/new", func (c context.Context) error {
-    return content.New(c)
-  })
   handler.Map("POST", "/content/publish", func (c context.Context) error {
     return content.Publish(c)
   })

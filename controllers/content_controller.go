@@ -28,6 +28,7 @@ type ContentController struct {
 }
 
 func (ctrl *ContentController) Read(key string, c context.Context) error {
+  if key == "new" { return ctrl.New(c) }
   wc := mycontext.NewContext(c)
   wc.Aec.Infof("Content Read (browse versions)")
 
