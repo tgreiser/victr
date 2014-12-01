@@ -9,6 +9,8 @@
     <h4>Pages</h4>
     {{ if .Message }}<div class="message alert alert-danger">{{ .Message }}</div>{{end}}
     Found: #{{ len .Pages }}
+    <a href="/content/new" class="btn btn-default">New Page</a>
+    <br/><br/>
     <table class="content-list table table-striped table-hover">
       <tr>
         <th>Path</th>
