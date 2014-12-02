@@ -23,6 +23,7 @@ func NewContent(wc mycontext.Context, page_key *datastore.Key) *Content {
     Title: wc.Ctx.FormValue("title"),
     Markdown: wc.Ctx.FormValue("content"),
     PageKey: page_key,
+    Version: 1,
   }
 
   return content
@@ -43,7 +44,7 @@ func FindContent(wc mycontext.Context, k *datastore.Key, c *Content) error {
 func FetchContentByPage(wc mycontext.Context, page_key *datastore.Key, sel *datastore.Key) ([]*Content, error) {
   lmt := 50
   wc.Aec.Infof("Page_key filter %v", page_key)
-  q := datastore.NewQuery("Content").Filter("PageKey=", page_key)
+  q := datastore.NewQuery("Content").Filter("PageKey=", page_key).Order("-Version").Limit(lmt)
   versions := make([]*Content, 0, lmt)
   keys, err := q.GetAll(wc.Aec, &versions)
   if _, ok := err.(*datastore.ErrFieldMismatch); ok {
@@ -55,7 +56,9 @@ func FetchContentByPage(wc mycontext.Context, page_key *datastore.Key, sel *data
   } else if len(keys) > 0 {
     for i, k := range keys {
       versions[i].Key = k
-      if versions[i].Key == sel {
+      wc.Aec.Infof("Comparing %v and %v", k, sel)
+      if versions[i].Key.String() == sel.String() {
+        wc.Aec.Infof("Selected version: %v", versions[i].Version)
         versions[i].Selected = true
       }
     }
@@ -74,9 +77,10 @@ type Content struct {
   Theme string
   Title string
   Draft bool
-  // version is achieved with CreatedAt
+  // version is achieved with CreatedAt, or maybe not?
   Markdown string `datastore:",noindex"`
   CreatedAt time.Time
+  Version int
 
   // non datastore fields
   Selected bool `datastore:"-"`

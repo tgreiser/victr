@@ -2,10 +2,23 @@
   <form method="POST" action="/content/">
 {{ end }}
 {{ define "nav-form" }}
-  Version {{ .Page.CurrentVersion }} of {{.Page.MaxVersion }}
+  Version
+    <select name="content_key" class="form-control-inline" id="version">
+      {{ range $i, $elem := .Versions }}
+      <option value="{{$elem.Key.Encode}}" {{if $elem.Selected}}SELECTED{{end}}
+        >{{$elem.Version}} of {{ $.Page.MaxVersion }}</option>
+      {{ end }}
+    </select>
     <input type="hidden" name="last_version" value="{{ .Page.MaxVersion }}" />
     <input type="submit" class="btn btn-default" value="View Draft" />
     <a href="/content/" class="btn btn-cancel">Cancel</a>
+    <script>
+$(document).ready(function() {
+    $( "#version" ).change(function() {
+      window.location.href = '/content/{{ .Page.NiceKey }}?content_key=' + $("#version").val();
+      });
+    });
+    </script>
 {{ end }}
 
 {{ define "page" }}

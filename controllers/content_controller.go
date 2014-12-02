@@ -35,7 +35,7 @@ func (ctrl *ContentController) Read(key string, c context.Context) error {
   msg := ""
   var p models.Page
   k := models.DsKey(wc, "Page", key)
-  ckey := wc.Ctx.FormValue("content")
+  ckey := wc.Ctx.FormValue("content_key")
   var content models.Content
 
   if err := models.FindPage(wc, k, &p); err != nil {
@@ -44,8 +44,11 @@ func (ctrl *ContentController) Read(key string, c context.Context) error {
   }
 
   if ckey != "" {
-    if err := models.FindContent(wc, models.DsKey(wc, "Content", ckey), &content); err != nil {
-      wc.Aec.Infof("Unable to load content: %v %v", ckey, err)
+    k, err := datastore.DecodeKey(ckey)
+    if err == nil {
+      if err := models.FindContent(wc, k, &content); err != nil {
+        wc.Aec.Infof("Unable to load content: %v %v", ckey, err)
+      }
     }
   }
   if content.Key == nil {
@@ -60,9 +63,17 @@ func (ctrl *ContentController) Read(key string, c context.Context) error {
 
 func (ctrl *ContentController) renderRead(wc mycontext.Context, message string, errs map[string]string, page *models.Page, content *models.Content) error {
   // load all the versions for this page
-  wc.Aec.Infof("Get content: %v", page.Key)
-  k, err := datastore.DecodeKey(wc.Ctx.FormValue("content_key"))
-  if err != nil { return ctrl.error(wc, "err_serious", err) }
+  ckey := wc.Ctx.FormValue("content_key")
+  k := &datastore.Key{}
+  var err error
+  if ckey != "" {
+    wc.Aec.Infof("Get content: %v %v", page.Key, wc.Ctx.FormValue("content_key"))
+    k, err = datastore.DecodeKey(wc.Ctx.FormValue("content_key"))
+    if err != nil { return ctrl.error(wc, "err_serious", err) }
+    wc.Aec.Infof("Got key: %v", k)
+  } else {
+    k = page.CurrentVersionKey
+  }
   versions, err := models.FetchContentByPage(wc, page.Key, k)
   if err != nil { return ctrl.error(wc, "err_serious", err) }
   sites, def_site, err := ctrl.prepSites(wc)
@@ -207,6 +218,7 @@ func (ctrl *ContentController) Create(c context.Context) error {
     }
 
     wc.Aec.Infof("Saving draft...")
+    content.Version = page.CurrentVersion
     if err := content.Save(wc, models.NewContentKey(wc)); err != nil {
       return ctrl.renderNew(wc, "Failed to save content", map[string]string{}, content, page)
     }
@@ -279,6 +291,7 @@ func (ctrl *ContentController) Publish(c context.Context) error {
   err = datastore.RunInTransaction(wc.Aec, func(c appengine.Context) error {
     // save to datastore
     content.Draft = false
+    content.Version = page.CurrentVersion
     if err := content.Save(wc, content.Key); err != nil {
       return err
     }
