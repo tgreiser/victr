@@ -40,6 +40,34 @@ func FindContent(wc mycontext.Context, k *datastore.Key, c *Content) error {
   return nil
 }
 
+func FetchContentByPage(wc mycontext.Context, page_key *datastore.Key, sel *datastore.Key) ([]*Content, error) {
+  lmt := 50
+  wc.Aec.Infof("Page_key filter %v", page_key)
+  q := datastore.NewQuery("Content").Filter("PageKey=", page_key)
+  versions := make([]*Content, 0, lmt)
+  keys, err := q.GetAll(wc.Aec, &versions)
+  if _, ok := err.(*datastore.ErrFieldMismatch); ok {
+    wc.Aec.Infof("datastore missing field, ignoring: %v", err)
+    err = nil
+  } else if err != nil {
+    wc.Aec.Errorf("got error instead of contents: %v", err)
+    return nil, err
+  } else if len(keys) > 0 {
+    for i, k := range keys {
+      versions[i].Key = k
+      if versions[i].Key == sel {
+        versions[i].Selected = true
+      }
+    }
+    return versions, nil
+  } else {
+    wc.Aec.Infof("Returning nil content - err no such entity")
+    err = datastore.ErrNoSuchEntity
+  }
+  return nil, err
+
+}
+
 type Content struct {
   Key *datastore.Key `datastore:"-"`
   PageKey *datastore.Key
@@ -49,6 +77,9 @@ type Content struct {
   // version is achieved with CreatedAt
   Markdown string `datastore:",noindex"`
   CreatedAt time.Time
+
+  // non datastore fields
+  Selected bool `datastore:"-"`
 }
 
 func (c *Content) Validate() map[string]string {

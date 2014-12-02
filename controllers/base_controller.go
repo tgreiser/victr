@@ -47,19 +47,19 @@ func (ctrl *BaseController) render(wc mycontext.Context, main string, data inter
   }
   if e := t.ExecuteTemplate(&output, "base", pagedata); e != nil {
     // unfortunately, this doesn't seem to fire if the template crashes mid-render due to a func error
-    wc.Aec.Errorf("Failed to render: %v", e)
-    return ctrl.error(wc, "err_serious")
+    return ctrl.error(wc, "err_serious", e)
   }
 
   return goweb.Respond.With(wc.Ctx, 200, output.Bytes())
 }
 
-func (ctrl *BaseController) error(wc mycontext.Context, msg_id string) error {
+func (ctrl *BaseController) error(wc mycontext.Context, msg_id string, err error) error {
   data := struct {
     Message string
   } {
     wc.T(msg_id),
   }
+  wc.Aec.Errorf("%v: %v", data.Message, err)
   return ctrl.render(wc, "error", data)
 }
 

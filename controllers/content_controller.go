@@ -40,7 +40,7 @@ func (ctrl *ContentController) Read(key string, c context.Context) error {
 
   if err := models.FindPage(wc, k, &p); err != nil {
     wc.Aec.Infof("Page not found: %v %v %v", k, key, err)
-    return ctrl.error(wc, "Page not found")
+    return ctrl.error(wc, "Page not found", err)
   }
 
   if ckey != "" {
@@ -60,11 +60,16 @@ func (ctrl *ContentController) Read(key string, c context.Context) error {
 
 func (ctrl *ContentController) renderRead(wc mycontext.Context, message string, errs map[string]string, page *models.Page, content *models.Content) error {
   // load all the versions for this page
+  wc.Aec.Infof("Get content: %v", page.Key)
+  k, err := datastore.DecodeKey(wc.Ctx.FormValue("content_key"))
+  if err != nil { return ctrl.error(wc, "err_serious", err) }
+  versions, err := models.FetchContentByPage(wc, page.Key, k)
+  if err != nil { return ctrl.error(wc, "err_serious", err) }
   sites, def_site, err := ctrl.prepSites(wc)
-  if err != nil { return err }
+  if err != nil { return ctrl.error(wc, "err_serious", err) }
   themes, err := models.FetchThemes(wc, def_site.Theme)
   if err != nil || len(themes) == 0 {
-    return ctrl.error(wc, "err_no_themes")
+    return ctrl.error(wc, "err_no_themes", err)
   }
 
   data := struct {
@@ -74,6 +79,7 @@ func (ctrl *ContentController) renderRead(wc mycontext.Context, message string, 
     Errors map[string]string
     Sites []*models.Site
     Themes []*models.Theme
+    Versions []*models.Content
   } {
     message,
     page,
@@ -81,6 +87,7 @@ func (ctrl *ContentController) renderRead(wc mycontext.Context, message string, 
     errs,
     sites,
     themes,
+    versions,
   }
 
   return ctrl.render(wc, "pageview", data)
@@ -102,8 +109,7 @@ func (ctrl *ContentController) renderReadMany(wc mycontext.Context, msg string) 
   pages, err := models.FetchPages(wc, def_site.Key, limit, offset)
   if err != nil {
     msg := "Unable to find site contents!"
-    ctrl.error(wc, msg)
-    wc.Aec.Errorf("%v: %v", msg, err)
+    ctrl.error(wc, msg, err)
   }
 
   return ctrl.render(wc, "content", struct {
@@ -141,7 +147,7 @@ func (ctrl *ContentController) renderNew(wc mycontext.Context, message string, e
   if err != nil { return err }
   themes, err := models.FetchThemes(wc, def_site.Theme)
   if err != nil || len(themes) == 0 {
-    return ctrl.error(wc, "err_no_themes")
+    return ctrl.error(wc, "err_no_themes", err)
   }
   if edit == nil {
     edit = &models.Content{
