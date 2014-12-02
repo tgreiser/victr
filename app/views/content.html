@@ -21,7 +21,13 @@
       </tr>
     {{ range $i, $elem := .Pages }}
       <tr>
-        <td><a href="{{ $elem.Url }}" target="_blank">{{ $elem.Path }}</a></td>
+        <td>
+          {{ if $elem.Published }}
+          <a href="{{ $elem.Url }}" target="_blank">{{ $elem.Path }}</a>
+          {{ else }}
+          {{ $elem.Path }}
+          {{ end }}
+        </td>
         <td>{{ $elem.CurrentVersion}}</td>
         <td>{{ $elem.UpdatedAt }}</td>
         <td>{{ $elem.CreatedAt }}</td>
