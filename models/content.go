@@ -31,11 +31,12 @@ func NewContent(wc mycontext.Context, page_key *datastore.Key) *Content {
 func FindContent(wc mycontext.Context, k *datastore.Key, c *Content) error {
   if err := datastore.Get(wc.Aec, k, c); err != nil {
     if err != datastore.ErrNoSuchEntity {
-      wc.Aec.Errorf("datastore error with FindContent: %v", err)
+      wc.Aec.Errorf("datastore error with FindContent: %v %v", k, err)
     }
     return err
   }
   c.Key = k
+  wc.Aec.Infof("Loaded content: %v", c)
   return nil
 }
 

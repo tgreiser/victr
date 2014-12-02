@@ -35,23 +35,52 @@ func (ctrl *ContentController) Read(key string, c context.Context) error {
   msg := ""
   var p models.Page
   k := models.DsKey(wc, "Page", key)
+  ckey := wc.Ctx.FormValue("content")
+  var content models.Content
+
   if err := models.FindPage(wc, k, &p); err != nil {
     wc.Aec.Infof("Page not found: %v %v %v", k, key, err)
     return ctrl.error(wc, "Page not found")
   }
 
-  return ctrl.renderRead(wc, msg, &p)
+  if ckey != "" {
+    if err := models.FindContent(wc, models.DsKey(wc, "Content", ckey), &content); err != nil {
+      wc.Aec.Infof("Unable to load content: %v %v", ckey, err)
+    }
+  }
+  if content.Key == nil {
+    if err := models.FindContent(wc, p.CurrentVersionKey, &content); err != nil {
+      wc.Aec.Infof("Unable to load current version content: %v %v", p.CurrentVersionKey, err)
+    }
+  }
+
+
+  return ctrl.renderRead(wc, msg, map[string]string{}, &p, &content)
 }
 
-func (ctrl *ContentController) renderRead(wc mycontext.Context, message string, page *models.Page) error {
+func (ctrl *ContentController) renderRead(wc mycontext.Context, message string, errs map[string]string, page *models.Page, content *models.Content) error {
   // load all the versions for this page
+  sites, def_site, err := ctrl.prepSites(wc)
+  if err != nil { return err }
+  themes, err := models.FetchThemes(wc, def_site.Theme)
+  if err != nil || len(themes) == 0 {
+    return ctrl.error(wc, "err_no_themes")
+  }
 
   data := struct {
     Message string
     Page *models.Page
+    Content *models.Content
+    Errors map[string]string
+    Sites []*models.Site
+    Themes []*models.Theme
   } {
     message,
     page,
+    content,
+    errs,
+    sites,
+    themes,
   }
 
   return ctrl.render(wc, "pageview", data)
@@ -60,7 +89,10 @@ func (ctrl *ContentController) renderRead(wc mycontext.Context, message string, 
 func (ctrl *ContentController) ReadMany(c context.Context) error {
   wc := mycontext.NewContext(c)
   wc.Aec.Infof("Content ReadMany")
+  return ctrl.renderReadMany(wc, "")
+}
 
+func (ctrl *ContentController) renderReadMany(wc mycontext.Context, msg string) error {
   limit := 100
   offset := 0
 
@@ -77,11 +109,11 @@ func (ctrl *ContentController) ReadMany(c context.Context) error {
   return ctrl.render(wc, "content", struct {
     Pages []*models.Page
     Sites []*models.Site
-    Message string
+    Message template.HTML
   } {
     pages,
     sites,
-    "",
+    template.HTML(msg),
   })
 }
 
@@ -143,11 +175,11 @@ Just plain **Markdown**, except that the input is sanitized:
 
 func (ctrl *ContentController) Create(c context.Context) error {
   wc := mycontext.NewContext(c)
-
-  wc.Aec.Infof("Running create %v", c.FormValue("content"))
+  wc.Aec.Infof("Running create")
 
   content := &models.Content{}
   page := models.NewPage(wc)
+  wc.Aec.Infof("Returned page: %v", page)
   errs := page.Validate(wc)
   if len(errs) > 0 {
     msg := "Failed to validate new page"
@@ -156,7 +188,7 @@ func (ctrl *ContentController) Create(c context.Context) error {
   }
 
   err := datastore.RunInTransaction(wc.Aec, func(c appengine.Context) error {
-    if err := page.Save(wc, models.NewPageKey(wc)); err != nil {
+    if err := page.Save(wc, page.Key); err != nil {
       return ctrl.renderNew(wc, "Failed to save page", map[string]string{}, nil, page)
     }
 
@@ -238,10 +270,21 @@ func (ctrl *ContentController) Publish(c context.Context) error {
     return err
   }
 
-  // save to datastore
-  content.Draft = false
-  if err := content.Save(wc, content.Key); err != nil {
-    return err
+  err = datastore.RunInTransaction(wc.Aec, func(c appengine.Context) error {
+    // save to datastore
+    content.Draft = false
+    if err := content.Save(wc, content.Key); err != nil {
+      return err
+    }
+
+    page.Published = true
+    if err := page.Save(wc, page.Key); err != nil {
+      return err
+    }
+    return nil
+  }, nil)
+  if err != nil {
+    wc.Aec.Errorf("Failed to save page or content: %v", err)
   }
 
   // get oauth client
@@ -280,5 +323,5 @@ func (ctrl *ContentController) Publish(c context.Context) error {
   }
 
   msg := "Page published at <a href=\"" + page.LiveUrl(wc) + "\" target=\"_blank\">" + page.LiveUrl(wc) +"</a>"
-  return ctrl.renderNew(wc, msg, map[string]string{}, nil, nil)
+  return ctrl.renderReadMany(wc, msg)
 }

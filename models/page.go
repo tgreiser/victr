@@ -3,6 +3,7 @@ package models
 import (
   "appengine"
   "appengine/datastore"
+  "strconv"
   "time"
 
   mycontext "github.com/tgreiser/victr/context"
@@ -13,8 +14,10 @@ func NewPageKey(wc mycontext.Context) *datastore.Key {
 }
 
 func NewPage(wc mycontext.Context) *Page {
+  wc.Aec.Infof("New page formvals: %v", wc.Ctx.FormParams())
+  path := wc.Ctx.FormValue("path")
   page := &Page {
-    Path: wc.Ctx.FormValue("path"),
+    Path: path,
     CurrentVersion: 1,
   }
   sitekey, err := datastore.DecodeKey(wc.Ctx.FormValue("site_id"))
@@ -22,8 +25,25 @@ func NewPage(wc mycontext.Context) *Page {
     wc.Aec.Warningf("Failed to decode site key: %v %v", wc.Ctx.FormValue("site_id"), err)
     return page
   }
-  page.SiteKey = sitekey
-  page.Init(wc)
+  wc.Aec.Infof("Site key: %v", sitekey)
+
+  ver := wc.Ctx.FormValue("last_version")
+  if ver == "" {
+    page.SiteKey = sitekey
+    page.Init(wc)
+    page.CurrentVersion = 1
+    page.Key = NewPageKey(wc)
+  } else {
+    page, err = FetchPageByPath(wc, sitekey, path)
+    if err != nil {
+      wc.Aec.Errorf("Failed to load path: %v", err)
+      return nil
+    }
+    cv, err := strconv.Atoi(ver)
+    if err == nil {
+      page.CurrentVersion = cv+1
+    }
+  }
   return page
 }
 
@@ -41,6 +61,7 @@ func FindPage(wc mycontext.Context, k *datastore.Key, p *Page) error {
 }
 
 func FetchPageByPath(wc mycontext.Context, site_key *datastore.Key, path string) (*Page, error) {
+  wc.Aec.Infof("Fetch: path=%v site_key=%v", path, site_key)
   q := datastore.NewQuery("Page").Filter("Path=", path).Filter("SiteKey=", site_key).Limit(1)
   pages := make([]*Page, 0, 1)
   keys, err := q.GetAll(wc.Aec, &pages)
@@ -92,6 +113,7 @@ type Page struct {
   Path string
   CurrentVersion int
   CurrentVersionKey *datastore.Key
+  MaxVersion int
   CreatedAt time.Time
   UpdatedAt time.Time
   Published bool
@@ -108,7 +130,7 @@ func (p *Page) Validate(wc mycontext.Context) map[string]string {
   ret := map[string]string{}
 
   if p.Path == "" { ret["path"] = "Please enter the relative path where your file will be published" }
-  if p.SiteKey == nil { ret["site"] = "Please select a site" }
+  if p.SiteKey == nil { ret["site_id"] = "Please select a site" }
 
   if p.CurrentVersion == 1 {
     // first save, verify the page isn't a name conflict
@@ -131,6 +153,7 @@ func (p *Page) Save(wc mycontext.Context, key *datastore.Key) error {
   err := datastore.RunInTransaction(wc.Aec, func(aec appengine.Context) error {
     if p.Key == nil { p.CreatedAt = time.Now() }
     p.UpdatedAt = time.Now()
+    if p.CurrentVersion > p.MaxVersion { p.MaxVersion = p.CurrentVersion }
     key, e := datastore.Put(aec, key, p)
     if e != nil {
       return e
