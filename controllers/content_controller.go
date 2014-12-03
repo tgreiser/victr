@@ -78,7 +78,7 @@ func (ctrl *ContentController) renderRead(wc mycontext.Context, message string, 
   if err != nil { return ctrl.error(wc, "err_serious", err) }
   sites, def_site, err := ctrl.prepSites(wc)
   if err != nil { return ctrl.error(wc, "err_serious", err) }
-  themes, err := models.FetchThemes(wc, def_site.Theme)
+  themes, err := models.FetchThemes(wc, def_site.Bucket, def_site.Theme)
   if err != nil || len(themes) == 0 {
     return ctrl.error(wc, "err_no_themes", err)
   }
@@ -156,7 +156,7 @@ func (ctrl* ContentController) prepSites(wc mycontext.Context) ([]*models.Site, 
 func (ctrl *ContentController) renderNew(wc mycontext.Context, message string, errs map[string]string, edit *models.Content, page *models.Page) error {
   sites, def_site, err := ctrl.prepSites(wc)
   if err != nil { return err }
-  themes, err := models.FetchThemes(wc, def_site.Theme)
+  themes, err := models.FetchThemes(wc, def_site.Bucket, def_site.Theme)
   if err != nil || len(themes) == 0 {
     return ctrl.error(wc, "err_no_themes", err)
   }

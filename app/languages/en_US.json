@@ -5,7 +5,7 @@
   },
   {
     "id": "err_no_themes",
-    "translation": "No themes were found. Please check your repository that you have something in site/themes/. Is it deployed?"
+    "translation": "No themes were found. Please check your repository that you have something in site/themes/<site bucket name>. Is it deployed?"
   },
   {
     "id": "err_serious",

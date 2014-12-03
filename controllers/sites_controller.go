@@ -52,8 +52,8 @@ func (ctrl *SitesController) fetchSites(wc mycontext.Context) []*models.Site {
   return sites
 }
 
-func (ctrl *SitesController) fetchThemes(wc mycontext.Context, sel string) ([]*models.Theme, error) {
-  themes, err := models.FetchThemes(wc, sel)
+func (ctrl *SitesController) fetchThemes(wc mycontext.Context, bucket, sel string) ([]*models.Theme, error) {
+  themes, err := models.FetchThemes(wc, bucket, sel)
   if err != nil || len(themes) == 0 {
     wc.Aec.Errorf("error fetching themes, panic: %v", err)
     return nil, ctrl.error(wc, "err_no_themes", err)
@@ -66,9 +66,9 @@ func (ctrl *SitesController) renderSites(wc mycontext.Context, message string, e
   sites := ctrl.fetchSites(wc)
   sel := ""
   if (edit != nil) { sel = edit.Theme }
-  themes, err := ctrl.fetchThemes(wc, sel)
+  themes, err := ctrl.fetchThemes(wc, edit.Bucket, sel)
   if err != nil || len(themes) == 0 {
-    return err
+    errs["theme"] = "No layout files were found at: site/themes/" + edit.Bucket + "/*.html"
   }
   wc.Aec.Infof("found %v sites", len(sites))
   wc.Aec.Infof("edit set? %v", edit != nil)
