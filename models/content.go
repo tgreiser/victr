@@ -5,6 +5,7 @@ import (
   "appengine/datastore"
   "bytes"
   "html/template"
+  "path"
   "time"
 
   "github.com/russross/blackfriday"
@@ -115,9 +116,9 @@ func (c *Content) Build(wc mycontext.Context) bytes.Buffer {
   wc.Aec.Infof("Got form vals: %v", c)
   draft := template.Must(template.ParseFiles(c.Theme))
   var output bytes.Buffer
-  path := "http://"
-  if wc.Ctx.HttpRequest().TLS != nil { path = "https://" }
-  path = path + appengine.DefaultVersionHostname(wc.Aec) + "/themes/" + c.Theme + "/"
+  url := "http://"
+  if wc.Ctx.HttpRequest().TLS != nil { url = "https://" }
+  url = url + appengine.DefaultVersionHostname(wc.Aec) + "/" + path.Dir(c.Theme) + "/"
   data := struct {
     Content template.HTML
     Title string
@@ -125,7 +126,7 @@ func (c *Content) Build(wc mycontext.Context) bytes.Buffer {
   }{
     template.HTML(blackfriday.MarkdownBasic([]byte(c.Markdown))),
     c.Title,
-    path,
+    url,
   }
   draft.Execute(&output, data )
   return output
