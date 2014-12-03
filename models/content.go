@@ -118,7 +118,7 @@ func (c *Content) Build(wc mycontext.Context) bytes.Buffer {
   var output bytes.Buffer
   url := "http://"
   if wc.Ctx.HttpRequest().TLS != nil { url = "https://" }
-  url = url + appengine.DefaultVersionHostname(wc.Aec) + "/" + path.Dir(c.Theme) + "/"
+  url = url + appengine.DefaultVersionHostname(wc.Aec) + "/" + path.Dir(c.Theme)
   data := struct {
     Content template.HTML
     Title string
