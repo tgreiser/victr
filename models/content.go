@@ -5,7 +5,6 @@ import (
   "appengine/datastore"
   "bytes"
   "html/template"
-  "path"
   "time"
 
   "github.com/russross/blackfriday"
@@ -114,8 +113,7 @@ func (c *Content) Save(wc mycontext.Context, key *datastore.Key) error {
 
 func (c *Content) Build(wc mycontext.Context) bytes.Buffer {
   wc.Aec.Infof("Got form vals: %v", c)
-  tmpl := path.Join("themes", c.Theme, "index.html")
-  draft := template.Must(template.ParseFiles(tmpl))
+  draft := template.Must(template.ParseFiles(c.Theme))
   var output bytes.Buffer
   path := "http://"
   if wc.Ctx.HttpRequest().TLS != nil { path = "https://" }

@@ -11,7 +11,7 @@
     {{ fg "theme" .Errors "Theme" }}
       <select name="theme" class="form-control">
         {{ range $i, $elem := .Themes }}
-        <option value="{{$elem.Name}}" {{if $elem.Selected}}SELECTED{{end}}
+        <option value="{{$elem.Path}}" {{if $elem.Selected}}SELECTED{{end}}
           >{{$elem.Name}}</option>
         {{ end}}
       </select>
