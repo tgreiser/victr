@@ -65,10 +65,14 @@ func (ctrl *SitesController) fetchThemes(wc mycontext.Context, bucket, sel strin
 func (ctrl *SitesController) renderSites(wc mycontext.Context, message string, errs map[string]string, edit *models.Site) error {
   sites := ctrl.fetchSites(wc)
   sel := ""
-  if (edit != nil) { sel = edit.Theme }
-  themes, err := ctrl.fetchThemes(wc, edit.Bucket, sel)
-  if err != nil || len(themes) == 0 {
-    errs["theme"] = "No layout files were found at: site/themes/" + edit.Bucket + "/*.html"
+  themes := []*models.Theme{}
+  var err error
+  if (edit != nil) {
+    sel = edit.Theme
+    themes, err = ctrl.fetchThemes(wc, edit.Bucket, sel)
+    if err != nil || len(themes) == 0 {
+      errs["theme"] = "No layout files were found at: site/themes/" + edit.Bucket + "/*.html"
+    }
   }
   wc.Aec.Infof("found %v sites", len(sites))
   wc.Aec.Infof("edit set? %v", edit != nil)
@@ -106,6 +110,12 @@ func (ctrl *SitesController) Create(c context.Context) error {
     Theme: wc.Ctx.FormValue("theme"),
   }
 
+  var err error
+  if wc.Ctx.FormValue("key") != "" {
+    site.Key, err = datastore.DecodeKey(wc.Ctx.FormValue("key"))
+    if err != nil { wc.Aec.Warningf("unable to decode site key: %v %v", wc.Ctx.FormValue("key"), err) }
+  }
+
   // validate
   wc.Aec.Infof("Validating...")
   if errs := site.Validate(); len(errs) > 0 {
@@ -116,7 +126,9 @@ func (ctrl *SitesController) Create(c context.Context) error {
 
   // save
   wc.Aec.Infof("Saving...")
-  if err := site.Save(wc, models.NewSiteKey(wc)); err != nil {
+  k := models.NewSiteKey(wc)
+  if site.Key != nil { k = site.Key }
+  if err := site.Save(wc, k); err != nil {
     msg := "Failed to save"
     wc.Aec.Errorf("msg %v", err)
     return ctrl.renderSites(wc, msg, map[string]string { }, site)

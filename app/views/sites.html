@@ -4,6 +4,9 @@
 {{ define "nav-form" }}
     <input type="submit" class="btn btn-default" value="Save" />
     <a href="/sites/" class="btn btn-cancel" value="Cancel">Cancel</a>
+    {{ if .Edit.Key }}
+    <input type="hidden" name="key" value="{{ .Edit.Key.Encode }}" />
+    {{ end }}
 {{ end }}
 
 {{ define "page" }}
