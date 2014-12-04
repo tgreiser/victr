@@ -7,6 +7,7 @@ import (
   "fmt"
   "html/template"
   "net/http"
+  "time"
 
   "code.google.com/p/google-api-go-client/storage/v1"
   "github.com/golang/oauth2"
@@ -239,7 +240,9 @@ func (ctrl *ContentController) Create(c context.Context) error {
     wc.Aec.Errorf("%v: %v", msg, err)
     return ctrl.renderNew(wc, msg, map[string]string{}, content, page)
   }
-  return ctrl.renderDraft(wc, content, page)
+  // Have to sleep here or the datastore won't have our data ready for us on redirect
+  time.Sleep(200 * time.Millisecond)
+  return goweb.Respond.WithRedirect(wc.Ctx, "/content/preview/" + page.Site + "/" + page.Path)
 }
 
 func (ctrl *ContentController) renderDraft(wc mycontext.Context, content *models.Content, page *models.Page) error {
