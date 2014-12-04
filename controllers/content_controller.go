@@ -78,7 +78,9 @@ func (ctrl *ContentController) renderRead(wc mycontext.Context, message string, 
   if err != nil { return ctrl.error(wc, "err_serious", err) }
   sites, def_site, err := ctrl.prepSites(wc)
   if err != nil { return ctrl.error(wc, "err_serious", err) }
-  themes, err := models.FetchThemes(wc, def_site.Bucket, def_site.Theme)
+  thm := def_site.Theme
+  if content != nil { thm = content.Theme }
+  themes, err := models.FetchThemes(wc, def_site.Bucket, thm)
   if err != nil || len(themes) == 0 {
     return ctrl.error(wc, "err_no_themes", err)
   }

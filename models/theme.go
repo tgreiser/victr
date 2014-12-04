@@ -21,10 +21,11 @@ func FetchThemes(wc mycontext.Context, bucket, sel string) ([]*Theme, error) {
   }
   themes := make([]*Theme, len(dir))
 
+  wc.Aec.Infof("Selected: %v", sel)
   for i, f := range dir {
-    wc.Aec.Infof("Found %v %v %v", i, f)
+    wc.Aec.Infof("Found %v %v %v", i, f, path.Base(f))
     t := &Theme { Path: f, Name: path.Base(f) }
-    if t.Name == sel {
+    if t.Path == sel {
       t.Selected = true
     }
     wc.Aec.Infof("Listing theme: %v", t.Name)
