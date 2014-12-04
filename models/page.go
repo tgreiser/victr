@@ -26,6 +26,12 @@ func NewPage(wc mycontext.Context) *Page {
     return page
   }
   wc.Aec.Infof("Site key: %v", sitekey)
+  var site Site
+  if err := FindSite(wc, sitekey, &site); err != nil {
+    wc.Aec.Errorf("Failed to get site information for page: %v %v", path, err)
+  } else {
+    page.Site = site.Bucket
+  }
 
   ver := wc.Ctx.FormValue("last_version")
   if ver == "" {
@@ -60,9 +66,19 @@ func FindPage(wc mycontext.Context, k *datastore.Key, p *Page) error {
   return nil
 }
 
+func FetchPageByBucketAndPath(wc mycontext.Context, bucket, path string) (*Page, error) {
+  wc.Aec.Infof("Fetch: path=%v bucket=%v", path, bucket)
+  q := datastore.NewQuery("Page").Filter("Path=", path).Filter("Site=", bucket).Limit(1)
+  return FetchPageByQuery(wc, q)
+}
+
 func FetchPageByPath(wc mycontext.Context, site_key *datastore.Key, path string) (*Page, error) {
   wc.Aec.Infof("Fetch: path=%v site_key=%v", path, site_key)
   q := datastore.NewQuery("Page").Filter("Path=", path).Filter("SiteKey=", site_key).Limit(1)
+  return FetchPageByQuery(wc, q)
+}
+
+func FetchPageByQuery(wc mycontext.Context, q *datastore.Query) (*Page, error) {
   pages := make([]*Page, 0, 1)
   keys, err := q.GetAll(wc.Aec, &pages)
   if _, ok := err.(*datastore.ErrFieldMismatch); ok {
@@ -110,6 +126,7 @@ func FetchPages(wc mycontext.Context, site_key *datastore.Key, limit, offset int
 type Page struct {
   Key *datastore.Key `datastore:"-"`
   SiteKey *datastore.Key
+  Site string
   Path string
   CurrentVersion int
   CurrentVersionKey *datastore.Key
