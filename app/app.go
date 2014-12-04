@@ -27,6 +27,9 @@ func init() {
   handler.Map("POST", "/content/publish", func (c context.Context) error {
     return content.Publish(c)
   })
+  handler.Map([]string {"GET","POST"}, "/content/preview/{site}/{path}", func (c context.Context) error {
+    return content.Preview(c)
+  })
 
   // failover handler
   /*

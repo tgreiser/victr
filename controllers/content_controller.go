@@ -129,10 +129,12 @@ func (ctrl *ContentController) renderReadMany(wc mycontext.Context, msg string) 
     Pages []*models.Page
     Sites []*models.Site
     Message template.HTML
+    Site *models.Site
   } {
     pages,
     sites,
     template.HTML(msg),
+    def_site,
   })
 }
 
@@ -237,7 +239,10 @@ func (ctrl *ContentController) Create(c context.Context) error {
     wc.Aec.Errorf("%v: %v", msg, err)
     return ctrl.renderNew(wc, msg, map[string]string{}, content, page)
   }
+  return ctrl.renderDraft(wc, content, page)
+}
 
+func (ctrl *ContentController) renderDraft(wc mycontext.Context, content *models.Content, page *models.Page) error {
   output := content.Build(wc)
   pagedata := struct {
     Draft template.HTML
@@ -346,4 +351,25 @@ func (ctrl *ContentController) Publish(c context.Context) error {
 
   msg := "Page published at <a href=\"" + page.LiveUrl(wc) + "\" target=\"_blank\">" + page.LiveUrl(wc) +"</a>"
   return ctrl.renderReadMany(wc, msg)
+}
+
+func (ctrl *ContentController) Preview(c context.Context) error {
+  wc := mycontext.NewContext(c)
+  path := wc.Ctx.PathParams().Get("path").Str() + ".html"
+  bucket := wc.Ctx.PathParams().Get("site").Str()
+  page, err := models.FetchPageByBucketAndPath(wc, bucket, path)
+  if err != nil {
+    msg := "Could not load page"
+    wc.Aec.Errorf("%v: %v", msg, err)
+    return ctrl.renderReadMany(wc, msg)
+  }
+
+  content := &models.Content{}
+  if err := models.FindContent(wc, page.CurrentVersionKey, content); err != nil {
+    msg := "Failed to load content, could not publish"
+    wc.Aec.Errorf("%v: %v %v", msg, page.CurrentVersionKey, err)
+    return ctrl.renderReadMany(wc, msg)
+  }
+  wc.Aec.Infof("Preview: %v %v", bucket, path)
+  return ctrl.renderDraft(wc, content, page)
 }

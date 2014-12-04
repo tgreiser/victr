@@ -18,6 +18,7 @@
         <th>Created</th>
         <th>&nbsp;</th>
       </tr>
+    {{ $site := .Site }}
     {{ range $i, $elem := .Pages }}
       <tr>
         <td>
@@ -42,6 +43,7 @@
               <input type="submit" class="btn btn-warning" value="Publish" name="action" />
               <input type="hidden" name="key" value="{{$elem.Key.Encode}}" />
             </form>
+            <a href="/content/preview/{{$site.Bucket}}/{{$elem.Path}}" target="_blank" class="btn btn-default">Preview</a>
           {{end}}
         </td>
       </tr>
