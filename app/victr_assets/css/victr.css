@@ -53,3 +53,7 @@ html body .alert {
 .content-list td {
   padding: 8px;
 }
+
+table.content-list form {
+  display: inline;
+}

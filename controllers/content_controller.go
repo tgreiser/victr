@@ -251,7 +251,7 @@ func (ctrl *ContentController) Create(c context.Context) error {
     content.Title,
     content.Markdown,
     page.Path,
-    content.Key.Encode(),
+    page.Key.Encode(),
     models.NiceKey(page.Key),
   }
   return ctrl.render(wc, "draft", pagedata)
@@ -265,20 +265,21 @@ func (ctrl *ContentController) Create(c context.Context) error {
 func (ctrl *ContentController) Publish(c context.Context) error {
   wc := mycontext.NewContext(c)
 
+  // this controller is poorly named but we are really loading a page, not a content
   key, err := datastore.DecodeKey(wc.Ctx.FormValue("key"))
   if err != nil {
     wc.Aec.Errorf("Failed to decode site key, can not publish: %v %v", wc.Ctx.FormValue("key"), err)
     return ctrl.renderNew(wc, "Could not publish", map[string]string{}, nil, nil)
   }
-  var content models.Content
-  if err := models.FindContent(wc, key, &content); err != nil {
-    wc.Aec.Errorf("Failed to load content, could not publish: %v %v", key, err)
+  var page models.Page
+  if err := models.FindPage(wc, key, &page); err != nil {
+    wc.Aec.Errorf("Failed to load page, could not publish: %v %v", key, err)
     return ctrl.renderNew(wc, "Could not publish", map[string]string{}, nil, nil)
   }
-  var page models.Page
-  if err := models.FindPage(wc, content.PageKey, &page); err != nil {
-    wc.Aec.Errorf("Failed to load page, could not publish: %v %v", key, err)
-    return ctrl.renderNew(wc, "Could not publish", map[string]string{}, &content, nil)
+  var content models.Content
+  if err := models.FindContent(wc, page.CurrentVersionKey, &content); err != nil {
+    wc.Aec.Errorf("Failed to load content, could not publish: %v %v", key, err)
+    return ctrl.renderNew(wc, "Could not publish", map[string]string{}, nil, &page)
   }
   output := content.Build(wc)
 
