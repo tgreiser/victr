@@ -60,7 +60,7 @@ function deleteSite(elem, id, name) {
       <select name="theme" class="form-control" placeholder="Pick a default theme">
         <option value=""></option>
         {{ range $i, $elem := .Themes }}
-          <option value="{{$elem.Name}}" {{if $elem.Selected}}SELECTED{{end}}
+          <option value="{{$elem.Path}}" {{if $elem.Selected}}SELECTED{{end}}
             >{{$elem.Name}}</option>
         {{ end }}
       </select>
