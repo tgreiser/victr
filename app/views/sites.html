@@ -66,6 +66,11 @@ function deleteSite(elem, id, name) {
       </select>
       {{ fg_close "theme" .Errors }}
 
+    {{ fg "image_path" .Errors "Image Upload Path" }}
+      <input type="text" name="image_path" class="form-control" placeholder="/assets/img"
+        {{if .Edit}} value="{{ .Edit.ImagePath }}"{{end}} />
+      {{ fg_close "image_path" .Errors }}
+
   </div>
 </form>
 {{end}}

@@ -108,6 +108,7 @@ func (ctrl *SitesController) Create(c context.Context) error {
     URL: wc.Ctx.FormValue("url"),
     Bucket: wc.Ctx.FormValue("bucket"),
     Theme: wc.Ctx.FormValue("theme"),
+    ImagePath: wc.Ctx.FormValue("image_path"),
   }
 
   var err error

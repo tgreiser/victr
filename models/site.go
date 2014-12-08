@@ -58,6 +58,7 @@ type Site struct {
   Theme string
   CreatedAt time.Time
   UpdatedAt time.Time
+  ImagePath string `datastore:",noindex"`
 }
 
 func (s *Site) Validate() map[string]string {
@@ -73,6 +74,7 @@ func (s *Site) Validate() map[string]string {
     ret["bucket"] = "Please enter the site bucket"
   }
   if s.Theme == "" {  ret["theme"] = "Please pick a default theme" }
+  if s.ImagePath == "" { ret["image_path"] = "Please enter an image upload path" }
 
   return ret
 }
