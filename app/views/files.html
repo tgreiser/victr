@@ -10,4 +10,18 @@
             <input type="hidden" name="path" value="{{.Path}}" id="path" />
             <input type="submit" name="sub" value="Upload" />
           </form>
+
+          {{ range $i, $elem := .Images }}
+            <span><a href="#" class="picker">{{$elem}}</a>
+            </span>
+          {{ end }}
+          <script>
+$('.picker').click(function() {
+  var image = 'http://{{.Bucket}}/' + this.innerText;
+  var md = '![Alt text]('+image+')';
+  var parent = window.parent;
+  var elem = $(parent.document.getElementById('wmd-input-0'))
+  elem.val(elem.val().trim() +"\n" + md)
+});
+          </script>
 {{ end }}

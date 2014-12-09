@@ -24,12 +24,21 @@ func (ctrl *FilesController) ReadMany(c context.Context) error {
 func (ctrl *FilesController) renderReadMany(wc mycontext.Context, msg string, errs map[string]string ) error {
   bucket := wc.Ctx.FormValue("bucket")
   path := wc.Ctx.FormValue("path")
+  obj, err := storage.NewObject(wc, bucket, path)
+  if err != nil { return ctrl.err(wc, err) }
+  found, err := obj.List(wc)
+  if err != nil { return ctrl.err(wc, err) }
+
+  wc.Aec.Infof("Found %v files", len(found))
+
   data := struct {
     Bucket string
     Path string
+    Images []string
   } {
     bucket,
     path,
+    found,
   }
 
   return ctrl.render(wc, "files", data)

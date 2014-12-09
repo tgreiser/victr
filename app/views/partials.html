@@ -54,6 +54,9 @@ function closeDialog () {
 };
 function okClicked () {
   //  document.title = document.getElementById ("xlInput").value;
+  var converter = new Markdown.Converter();
+  var html = converter.makeHtml($('#wmd-input-0').val());
+  $('#wmd-preview-0')[0].innerHTML = html;
   closeDialog ();
 };
     </script>

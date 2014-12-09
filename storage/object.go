@@ -52,6 +52,21 @@ type Object struct {
   Inner *gstorage.Object
 }
 
+func (ob *Object) List(wc mycontext.Context) ([]string, error) {
+  objs, err := ob.Service.List(ob.Inner.Bucket).Do()
+  var found = []string{}
+  for _, e := range objs.Items {
+    wc.Aec.Infof("Matching %v and %v", e.Name, ob.Inner.Name)
+    if len(e.Name) > len(ob.Inner.Name) && e.Name[0:len(ob.Inner.Name)] == ob.Inner.Name {
+      found = append(found, e.Name)
+    } else {
+      wc.Aec.Infof("%v no match for %v", e.Name, ob.Inner.Name)
+    }
+  }
+
+  return found, err
+}
+
 func (ob *Object) Store(wc mycontext.Context, r io.Reader) error {
   _,  err := ob.Service.Insert(ob.Inner.Bucket, ob.Inner).Media(r).Do()
   if err != nil {
