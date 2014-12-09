@@ -40,7 +40,9 @@
     <!-- Le lift -->
     <script type="text/javascript">
 $( document ).ready(function() {
-  $("textarea#pagedownMe").pagedownBootstrap();
+    $("textarea#pagedownMe").pagedownBootstrap({
+      "sanitize": false,
+      });
 
 //  $('#upload').fileUpload();
 
