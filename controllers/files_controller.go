@@ -41,7 +41,7 @@ func (ctrl *FilesController) renderReadMany(wc mycontext.Context, msg string, er
     found,
   }
 
-  return ctrl.render(wc, "files", data)
+  return ctrl.renderFrame(wc, "files", data)
 }
 
 func (ctrl *FilesController) Create(c context.Context) error {

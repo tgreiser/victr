@@ -14,6 +14,17 @@ import (
 
 type BaseController struct {}
 
+func (ctrl *BaseController) renderFrame(wc mycontext.Context, main string, data interface {}) error {
+  tplf := mycontext.AppPath(filepath.Join("views", main + ".html"))
+  t := template.New("frame").Funcs(ctrl.funcMap())
+  t = template.Must(t.ParseFiles(tplf))
+  var frb bytes.Buffer
+  if e := t.ExecuteTemplate(&frb, main, data ); e != nil {
+    wc.Aec.Errorf("Template err: %v", e)
+  }
+  return goweb.Respond.With(wc.Ctx, 200, frb.Bytes())
+}
+
 func (ctrl *BaseController) render(wc mycontext.Context, main string, data interface {}) error {
   matches, _ := ctrl.templates(wc, main)
   wc.Aec.Infof("Got matches for %v.html: %v", main, matches)

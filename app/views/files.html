@@ -1,9 +1,13 @@
-{{ define "form" }}
-{{ end }}
-{{ define "nav-form" }}
-{{ end }}
-
-{{ define "page" }}
+{{ define "files" }}
+<html>
+  <head>
+    <link href="../victr_assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../victr_assets/css/font-awesome.min.css" rel="stylesheet">
+    <link href="../victr_assets/css/victr.css" rel="stylesheet">
+    <link href="../victr_assets/css/jquery.pagedown-bootstrap.css" rel="stylesheet">
+    <script src="../victr_assets/js/jquery.min.js"></script>
+  </head>
+  <body>
           <form action="/files/" method="POST" enctype="multipart/form-data" id="upload">
             <input id="file-input" type="file" multiple="true" name="image">
             <input type="hidden" name="bucket" value="{{.Bucket}}" id="bucket" />
@@ -16,6 +20,7 @@
             </span>
           {{ end }}
           <script>
+$(document).ready(function() {
 $('.picker').click(function() {
   var image = 'http://{{.Bucket}}/' + this.innerText;
   var md = '![Alt text]('+image+')';
@@ -23,5 +28,8 @@ $('.picker').click(function() {
   var elem = $(parent.document.getElementById('wmd-input-0'))
   elem.val(elem.val().trim() +"\n" + md)
 });
+});
           </script>
+  </body>
+</html>
 {{ end }}
