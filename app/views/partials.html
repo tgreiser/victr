@@ -26,8 +26,10 @@
       {{ fg_close "path" .Errors }}
 
     <div class="form-wide" style="padding-bottom: 5px;">
-      <button type="button" class="btn btn-default" id="victr-image-browse">Upload Image</button>
-      <span id="upload-status"></span>
+      <button data-toggle="modal" data-target="#imageManagerDialog" class="btn btn-primary btn-large">Image Manager</button>
+
+      <!-- button type="button" class="btn btn-default" id="victr-image-browse">Upload Image</button>
+      <span id="upload-status"></span -->
     </div>
 
     <div class="form-wide">
@@ -40,22 +42,41 @@
 $( document ).ready(function() {
   $("textarea#pagedownMe").pagedownBootstrap();
 
-  $('#victr-image-browse').click(function() {
-    $('input[type="file"]').click();
-    });
-  $('input[type="file"]').change(function() {
-    $('#upload-status')[0].innerText = 'Uploading...';
-    $('#upload').submit();
+//  $('#upload').fileUpload();
+
+  $('#imageManagerDialog').bind('show', function () {
+    //   document.getElementById ("xlInput").value = document.title;
   });
-  $('#upload').fileUpload();
 });
+
+function closeDialog () {
+  $('#imageManagerDialog').modal('hide');
+};
+function okClicked () {
+  //  document.title = document.getElementById ("xlInput").value;
+  closeDialog ();
+};
     </script>
   </form>
 
-  <div style="visibility:hidden;">
-    <form action="/files" method="POST" enctype="multipart/form-data" id="upload">
-      <input id="file-input" type="file" multiple="true">
-    </form>
+  <div id="imageManagerDialog" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="windowTitleLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <a href="#" class="close" data-dismiss="modal">&times;</a>
+          <h3>Image Manager</h3>
+        </div>
+        <div class="modal-body">
+          <div class="divDialogElements">
+            <iframe name="files" src="/files/?bucket={{.Bucket}}&path={{.ImagePath}}"></iframe>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn" onclick="closeDialog ();">Cancel</a>
+          <a href="#" class="btn btn-primary" onclick="okClicked ();">OK</a>
+        </div>
+      </div>
+    </div>
   </div>
 
 {{ end }}

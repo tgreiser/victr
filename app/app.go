@@ -49,6 +49,16 @@ func init() {
     return NotFound(c)
   })
   http.Handle("/sites/", conf)
+
+  fileh := handlers.NewHttpHandler(goweb.CodecService)
+  files := new(controllers.FilesController)
+  fileh.MapController(files)
+  fileh.Map(func(c context.Context) error {
+    wc := mycontext.NewContext(c)
+    wc.Aec.Infof("Not found: %v %v", c.MethodString(), c.Path())
+    return NotFound(c)
+  })
+  http.Handle("/files/", fileh)
 }
 
 func NotFound(c context.Context) error {

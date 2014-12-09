@@ -6,17 +6,14 @@ import (
   "bytes"
   "fmt"
   "html/template"
-  "net/http"
   "time"
 
-  "code.google.com/p/google-api-go-client/storage/v1"
-  "github.com/golang/oauth2"
-  "github.com/golang/oauth2/google"
   "github.com/stretchr/goweb"
   "github.com/stretchr/goweb/context"
 
   mycontext "github.com/tgreiser/victr/context"
   "github.com/tgreiser/victr/models"
+  "github.com/tgreiser/victr/storage"
 )
 
 /*
@@ -94,6 +91,8 @@ func (ctrl *ContentController) renderRead(wc mycontext.Context, message string, 
     Sites []*models.Site
     Themes []*models.Theme
     Versions []*models.Content
+    Bucket string
+    ImagePath string
   } {
     message,
     page,
@@ -102,6 +101,8 @@ func (ctrl *ContentController) renderRead(wc mycontext.Context, message string, 
     sites,
     themes,
     versions,
+    def_site.Bucket,
+    def_site.ImagePath,
   }
 
   return ctrl.render(wc, "pageview", data)
@@ -183,6 +184,8 @@ Just plain **Markdown**, except that the input is sanitized:
     Message template.HTML
     Content *models.Content
     Page *models.Page
+    Bucket string
+    ImagePath string
   } {
     sites,
     errs,
@@ -190,6 +193,8 @@ Just plain **Markdown**, except that the input is sanitized:
     template.HTML(message),
     edit,
     page,
+    def_site.Bucket,
+    def_site.ImagePath,
   }
 //  wc.Aec.Infof("Page data: %v %v", edit.Title, page.Path)
   return ctrl.render(wc, "new", data)
@@ -317,38 +322,11 @@ func (ctrl *ContentController) Publish(c context.Context) error {
     wc.Aec.Errorf("Failed to save page or content: %v", err)
   }
 
-  // get oauth client
-  wc.Aec.Infof("Getting oauth client")
-  f, err := oauth2.New(
-    google.AppEngineContext(wc.Aec),
-    oauth2.Scope(
-      "https://www.googleapis.com/auth/devstorage.read_write",
-    ),
-  )
+  obj, err := storage.NewObject(wc, site.Bucket, page.Path)
   if err != nil {
-    wc.Aec.Errorf("cloud storage auth failed: %v", err)
-    // TODO return to /content/new with pagedata pre-filled
-    return err
+    return ctrl.renderNew(wc, "Failed to upload published page!", map[string]string{}, &content, &page)
   }
-  client := http.Client{Transport: f.NewTransport()}
-
-  // do the cloud storage put operation
-  wc.Aec.Infof("Cloud storage put...")
-  storeSvc, err := storage.New(&client)
-  if err != nil {
-    wc.Aec.Errorf("failed to get storage client: %v", err)
-    return err
-  }
-  obj := storage.NewObjectsService(storeSvc)
-  object := &storage.Object {
-    Bucket: site.Bucket,
-    ContentType: "text/html",
-    Name: page.Path,
-  }
-
-  object, err = obj.Insert(site.Bucket, object).Media(bytes.NewReader(output.Bytes())).Do()
-  if err != nil {
-    wc.Aec.Errorf("Failed to store page: %v", err)
+  if err := obj.Store(wc, bytes.NewReader(output.Bytes())); err != nil {
     return ctrl.renderNew(wc, "Failed to upload published page!", map[string]string{}, &content, &page)
   }
 
