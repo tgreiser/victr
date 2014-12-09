@@ -25,6 +25,11 @@
       <input type="text" name="path" class="form-control" placeholder="index.html" value="{{if .Page }}{{ .Page.Path }}{{end}}" />
       {{ fg_close "path" .Errors }}
 
+    <div class="form-wide" style="padding-bottom: 5px;">
+      <button type="button" class="btn btn-default" id="victr-image-browse">Upload Image</button>
+      <span id="upload-status"></span>
+    </div>
+
     <div class="form-wide">
       <textarea id="pagedownMe" name="content" class="form-control" rows="10">{{ .Content.Markdown }}
       </textarea>
@@ -34,7 +39,23 @@
     <script type="text/javascript">
 $( document ).ready(function() {
   $("textarea#pagedownMe").pagedownBootstrap();
+
+  $('#victr-image-browse').click(function() {
+    $('input[type="file"]').click();
+    });
+  $('input[type="file"]').change(function() {
+    $('#upload-status')[0].innerText = 'Uploading...';
+    $('#upload').submit();
+  });
+  $('#upload').fileUpload();
 });
     </script>
+  </form>
+
+  <div style="visibility:hidden;">
+    <form action="/files" method="POST" enctype="multipart/form-data" id="upload">
+      <input id="file-input" type="file" multiple="true">
+    </form>
+  </div>
 
 {{ end }}
