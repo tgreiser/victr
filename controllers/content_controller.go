@@ -168,12 +168,10 @@ func (ctrl *ContentController) renderNew(wc mycontext.Context, message string, e
   }
   if edit == nil {
     edit = &models.Content{
-      Markdown: `This is the *first* editor.
+      Markdown: `Welcome to *VICtR*
 ------------------------------
 
-Just plain **Markdown**, except that the input is sanitized:
-
-<marquee>I'm the ghost from the past!</marquee>`,
+Edit your text in markdown or **HTML**, and see your changes live below.`,
     }
   }
   wc.Aec.Infof("Got content: %v", edit)
