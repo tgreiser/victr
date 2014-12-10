@@ -16,13 +16,13 @@
           </form>
 
           {{ range $i, $elem := .Images }}
-            <span><a href="#" class="picker">{{$elem}}</a>
-            </span>
+            <div><a href="#" class="picker" x-data="{{$elem}}">{{ base $elem }}</a>
+            </div>
           {{ end }}
           <script>
 $(document).ready(function() {
 $('.picker').click(function() {
-  var image = 'http://{{.Bucket}}/' + this.innerText;
+  var image = 'http://{{.Bucket}}/' + $(this).attr('x-data');
   var md = '![Alt text]('+image+')';
   var parent = window.parent;
   var elem = $(parent.document.getElementById('wmd-input-0'))

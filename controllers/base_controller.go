@@ -5,6 +5,7 @@ import (
   "fmt"
   "html/template"
   "net/http"
+  "path"
   "path/filepath"
 
   "github.com/stretchr/goweb"
@@ -87,6 +88,7 @@ func (ctrl *BaseController) funcMap() template.FuncMap {
     "menu_link": ctrl.MenuLink,
     "fg": ctrl.FormGroup,
     "fg_close": ctrl.FormGroupClose,
+    "base": path.Base,
   }
 }
 

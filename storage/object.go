@@ -57,7 +57,7 @@ func (ob *Object) List(wc mycontext.Context) ([]string, error) {
   var found = []string{}
   for _, e := range objs.Items {
     wc.Aec.Infof("Matching %v and %v", e.Name, ob.Inner.Name)
-    if len(e.Name) > len(ob.Inner.Name) && e.Name[0:len(ob.Inner.Name)] == ob.Inner.Name {
+    if len(e.Name) > len(ob.Inner.Name)+1 && e.Name[0:len(ob.Inner.Name)] == ob.Inner.Name {
       found = append(found, e.Name)
     } else {
       wc.Aec.Infof("%v no match for %v", e.Name, ob.Inner.Name)
